@@ -13,9 +13,10 @@
   "license": "ISC",
   "author": "Grupo 44 PS",
   "type": "module",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
