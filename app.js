@@ -174,15 +174,27 @@ app.get('/communities', async (req, res) => {
   try {
     const {data: user, error: userError} = await supabase.from('Users').select('*').eq('id', userId).single();
 
-    const { data, error } = await supabase.from('Communities')
-        .select('ID, userID, name, description, created_at')
-        .eq('private', false)
-        .neq('userID', user.id)
+    // Consulta 1: Obtener comunidades públicas
+    const { data, error } = await supabase.from('Communities').select('id, userID, name, description, created_at')
+        .eq('isPrivate', false)
         .limit(3);
+
+    // Consulta 2: Obtener las comunidades en las que el usuario ya está
+    const { data: memberships, error: membershipsError } = await supabase
+        .from('CommunityUser')
+        .select('communityID')
+        .eq('userID', user.id);
+
+    // Extraer los IDs de las comunidades a las que pertenece el usuario
+    const membershipIDs = memberships.map(item => item.communityID);
+
+    // Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
+    const filteredCommunities = data.filter(community => !membershipIDs.includes(community.id));
+
   
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.json(data);
+    return res.json(filteredCommunities);
 
   } catch (error) {
     res.status(500).json({ error: error.message });
