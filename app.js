@@ -48,24 +48,23 @@ app.post('/user-register', async (req, res) => {
 
   try {
     // Register the user with Supabase Auth
-    const {data, error} = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    if (authError) {
-      console.error('Error during user registration:', authError);
-      return res.status(400).json({ error: authError.message });
+    if (error) {
+      console.error('Error during user registration:', error);
+      return res.status(400).json({ error: error.message });
     }
 
     // Insert additional user data into the Users table
-    console.log(req.body.password)
     const { data: userData, error: userError } = await supabase.from('Users').insert([
       {
-        id: authData.user.id, // Use the ID from Supabase Auth
-        username: req.body.username,
-        email:req.body.email,
-        description: req.body.description,
+        id: data.user.id, // Use the ID from Supabase Auth
+        username: username,
+        email: email,
+        description: description,
       },
     ]);
 
@@ -80,6 +79,7 @@ app.post('/user-register', async (req, res) => {
     res.status(500).json({ error: 'An unexpected error occurred' });
   }
 });
+
 
 // New endpoint for user login using Supabase Auth
 app.post('/login', async (req, res) => {
@@ -101,7 +101,7 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ error: authError.message });
     }
 
-    res.status(200).json({ message: 'Login successful', token: authData.session.access_token });
+    res.status(200).json({ message: 'Login successful', token: authData.session.access_token, userID:  authData.session.user.id });
   } catch (err) {
     console.error('Unexpected error:', err);
     res.status(500).json({ error: 'An unexpected error occurred' });
