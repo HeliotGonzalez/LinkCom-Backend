@@ -4,7 +4,6 @@ import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import { getUser, getCommunityIds, getRecentEvents, getRecentAnnounces } from './feedService.js';
 
-
 const app = express();
 
 app.use(cors());
@@ -270,8 +269,8 @@ app.get('/feed', async (req, res) => {
   }
 });
 
-// GET /communities -> Devuelve la lista de comunidades desde la tabla "Communities"
-app.get('/communities', async (req, res) => {
+// GET /nonBelongingCommunities -> Devuelve la lista de comunidades desde la tabla "Communities"
+app.get('/nonBelongingCommunities', async (req, res) => {
   const { userId } = req.query;
 
   if (!userId) {
@@ -341,7 +340,7 @@ app.get('/getCalendarEvents', async (req, res) => {
 });
 
 // POST /
-app.post('/createEventUser', async (req, res) => {
+app.post('/joinEvent', async (req, res) => {
   const { userID, eventID, communityID } = req.body;
 
   if (!userID || !eventID || !communityID) {
