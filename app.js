@@ -1,5 +1,5 @@
 // app.js
-import express, {query} from 'express';
+import express from 'express';
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 
@@ -110,6 +110,13 @@ app.get('/events', async (req, res) => {
   if (!eventsResponse.success) return res.status(500).json({ error: eventsResponse["error"]});
 
   res.status(201).json({message: 'User events found!', data: eventsResponse.data});
+});
+
+app.get('/interests', async (req, res) => {
+  const interestsResponse = await executeQuery(supabase.from('Interests').select('*'));
+  if (!interestsResponse.success) return res.status(500).json({ error: interestsResponse["error"]});
+
+  res.status(201).json({message: 'Interests found!', data: interestsResponse.data});
 });
 
 const PORT = process.env.PORT || 3000;
