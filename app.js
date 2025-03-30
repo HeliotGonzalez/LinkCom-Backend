@@ -28,47 +28,78 @@ app.get('/test', async (req, res) => {
   res.json(data);
 });
 
-app.post('/add-email', async (req, res) => {
-  const { email } = req.body;
 
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
+// New endpoint for user registration using Supabase Auth
+app.post('/user-register', async (req, res) => {
+  console.log('Request body:', req.body); // Debugging log
+  const { email, password, username, description } = req.body;
+
+  if (!email || !password || !username) {
+    return res.status(400).json({ error: 'Email, password, and username are required' });
   }
 
-  const { data, error } = await supabase.from('test').insert([{ email }]);
-
-  if (error) {
-    console.error('Error inserting email into Supabase:', error);
-    return res.status(500).json({ error: error.message });
-  }
-
-  res.status(201).json({ message: 'Email added successfully', data });
-});
-
-// New endpoint for user registration
-app.post('/register', async (req, res) => {
-  const { username, email, password } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Username, email, and password are required' });
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
   }
 
   try {
-    // Insert user data into the database
-    const { data, error } = await supabase.from('test').insert([
+    // Register the user with Supabase Auth
+    const {data, error} = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (authError) {
+      console.error('Error during user registration:', authError);
+      return res.status(400).json({ error: authError.message });
+    }
+
+    // Insert additional user data into the Users table
+    console.log(req.body.password)
+    const { data: userData, error: userError } = await supabase.from('Users').insert([
       {
-        username,
-        email,
-        password, // Note: Store hashed passwords in production!
+        id: authData.user.id, // Use the ID from Supabase Auth
+        username: req.body.username,
+        email:req.body.email,
+        description: req.body.description,
       },
     ]);
 
-    if (error) {
-      console.error('Error inserting user into Supabase:', error);
-      return res.status(500).json({ error: error.message });
+    if (userError) {
+      console.error('Error inserting user into Users table:', userError);
+      return res.status(500).json({ error: userError.message });
     }
 
-    res.status(201).json({ message: 'User registered successfully', data });
+    res.status(201).json({ message: 'User registered successfully', user: userData });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+});
+
+// New endpoint for user login using Supabase Auth
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
+  try {
+    // Authenticate the user with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      console.error('Error during login:', authError);
+      return res.status(401).json({ error: authError.message });
+    }
+
+    res.status(200).json({ message: 'Login successful', token: authData.session.access_token });
   } catch (err) {
     console.error('Unexpected error:', err);
     res.status(500).json({ error: 'An unexpected error occurred' });
