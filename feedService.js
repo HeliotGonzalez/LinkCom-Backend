@@ -58,7 +58,7 @@ export async function getRecentEvents(communityIds, twoDaysAgo, userId) {
   // Si el usuario ya se ha unido a algunos eventos, los excluimos
   if (joinedEventIDs.length > 0) {
     const joinedIdsStr = `(${joinedEventIDs.join(',')})`;
-    query = query.filter('ID', 'not.in', joinedIdsStr);
+    query = query.filter('id', 'not.in', joinedIdsStr);
   }
 
   const { data, error } = await query;
