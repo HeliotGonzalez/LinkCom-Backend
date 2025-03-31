@@ -1,7 +1,6 @@
 // app.js
 import express from 'express';
 import cors from 'cors';
-import multer from 'multer';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
 import {saveImage} from "./imagesStore.js";
@@ -81,16 +80,26 @@ app.post('/createCommunity', async (req, res) => {
     res.status(201).json({message: 'Community created successfully', data: {...req.body, communityID}});
 });
 
+app.post('/storeImage', async (req, res) => {
+    const { image, directory } = req.body;
+    await saveImage(image, directory);
+    res.status(201).json({message: 'Image stored successfully', data: { image, directory}});
+});
+
 app.post('/updateCommunityImage', async (req, res) => {
-    const { image, communityID } = req.body;
-
-    const imagePath = `communities/${communityID}`;
-    await saveImage(image, imagePath);
-
-    const updateCommunityImageResponse = await executeQuery(supabase.from('Communities').update('imagePath', imagePath).eq('id', communityID));
+    const { imagePath, communityID } = req.body;
+    const updateCommunityImageResponse = await executeQuery(supabase.from('Communities').update({ imagePath }).eq('id', communityID));
     if (!updateCommunityImageResponse.success) return res.status(500).json({error: updateCommunityImageResponse["error"]});
 
-    res.status(201).json({message: 'Community image path updated successfully', data: {communityID, imagePath}});
+    res.status(201).json({message: 'Community image path updated successfully', data: { communityID, imagePath }});
+});
+
+app.post('/updateEventImage', async (req, res) => {
+    const { imagePath, communityID, eventID } = req.body;
+    const updateCommunityImageResponse = await executeQuery(supabase.from('Events').update({ imagePath }).eq('id', eventID).eq('communityID', communityID));
+    if (!updateCommunityImageResponse.success) return res.status(500).json({error: updateCommunityImageResponse["error"]});
+
+    res.status(201).json({message: 'Community image path updated successfully', data: {eventID, imagePath}});
 });
 
 app.get('/communities', async (req, res) => {
@@ -125,7 +134,7 @@ app.post('/createEvent', async (req, res) => {
     }]));
     if (!eventUserResponse.success) return res.status(500).json({error: eventUserResponse["error"]});
 
-    res.status(201).json({message: 'Event created successfully', data: req.body});
+    res.status(201).json({message: 'Event created successfully', data: {...req.body, eventID}});
 });
 
 app.get('/userEvents', async (req, res) => {
@@ -377,7 +386,7 @@ app.get('/getCalendarEvents', async (req, res) => {
         }
 
         // 2. Consultar la tabla "Events" para obtener los eventos cuyos IDs están en eventIDs
-        const {data, error} = await supabase.from('Events').select('*').in('ID', eventIDs);
+        const {data, error} = await supabase.from('Events').select('*').in('id', eventIDs);
 
         if (error) throw error;
 
