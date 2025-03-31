@@ -392,3 +392,58 @@ app.post('/joinCommunity', async (req, res) => {
   }
 });
 
+app.get("/users", async (req, res) => {
+  const { communityID } = req.query;
+
+  if (!communityID) {
+    return res.status(400).json({ error: 'communityID son requeridos' });
+  }
+
+  const userIdsResponse = await executeQuery(supabase.from('CommunityUser').select('userID, communityRole').eq('communityID', communityID));
+  if (!userIdsResponse.success) return res.status(500).json({ error: userIdsResponse["error"]});
+
+  const usersResponse = await executeQuery(supabase.from('Users').select('*').in('id', userIdsResponse.data.map(user => user.userID)));
+  if (!usersResponse.success) return res.status(500).json({ error: usersResponse["error"]});
+  const users = usersResponse.data;
+  const data = users.map(user => {
+    const userId = user.id;
+    const communityRole = userIdsResponse.data.find(u => u.userID === userId).communityRole;
+    return { ...user, communityRole };
+  });
+  return res.status(201).json({ message: 'Usuarios encontrados', data });
+});
+
+
+app.get('/updateusers', async (req, res) => {
+  const { userID, communityID, role } = req.query;
+
+  if (!userID || !communityID || !role) {
+    return res.status(400).json({ error: 'userID, communityID y role son requeridos' });
+  }
+
+  try {
+    const { data, error } = await supabase.from('CommunityUser').update({ communityRole: role }).eq('userID', userID).eq('communityID', communityID);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  
+    return res.status(201).json({ message: 'El usuario ha actualizado su rol correctamente', data });
+
+  } catch (err) {
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
+});
+
+app.get('/community', async (req, res) => {
+  const { communityID } = req.query;
+
+  if (!communityID) {
+    return res.status(400).json({ error: 'communityID es requerido' });
+  }
+
+  const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
+  if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
+  const data = communityResponse.data;
+  return res.status(201).json({ message: 'Usuarios encontrados', data });
+});
