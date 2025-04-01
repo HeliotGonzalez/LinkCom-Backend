@@ -22,10 +22,7 @@ export async function getUser(userId) {
  * @returns {Promise<string[]>}
  */
 export async function getCommunityIds(userId) {
-  const { data, error } = await supabase
-    .from('CommunityUser')
-    .select('communityID')
-    .eq('userID', userId);
+  const { data, error } = await supabase.from('CommunityUser').select('communityID').eq('userID', userId);
   if (error) throw error;
   return data.map(cu => cu.communityID);
 }
@@ -40,25 +37,18 @@ export async function getCommunityIds(userId) {
  */
 export async function getRecentEvents(communityIds, twoDaysAgo, userId) {
   // Obtener los eventIDs a los que el usuario ya se ha unido
-  const { data: userEvents, error: userEventsError } = await supabase
-    .from('EventUser')
-    .select('eventID')
-    .eq('userID', userId);
+  const { data: userEvents, error: userEventsError } = await supabase.from('EventUser').select('eventID').eq('userID', userId);
   if (userEventsError) throw userEventsError;
   const joinedEventIDs = userEvents.map(ue => ue.eventID);
 
   // Consultar los eventos de las comunidades y filtrarlos por fecha
-  let query = supabase
-    .from('Events')
-    .select('*')
-    .in('communityID', communityIds)
-    .gte('created_at', twoDaysAgo)
-    .limit(10);
+  let query = supabase.from('Events').select('*').in('communityID', communityIds).gte('created_at', twoDaysAgo);
 
   // Si el usuario ya se ha unido a algunos eventos, los excluimos
   if (joinedEventIDs.length > 0) {
-    const joinedIdsStr = `(${joinedEventIDs.join(',')})`;
-    query = query.filter('id', 'not.in', joinedIdsStr);
+    query = query.not('id', 'in', joinedEventIDs).limit(10);
+  } else {
+    query = query.limit(10);
   }
 
   const { data, error } = await query;
