@@ -3,14 +3,14 @@ import express from 'express';
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
-import {saveImage} from "./imagesStore.js";
+import {getImage, saveImage} from "./imagesStore.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-app.use(express.urlencoded({ limit: '50mb', extended: true }));  // Si usas formularios
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -119,13 +119,10 @@ app.post('/createEvent', async (req, res) => {
         communityID,
         userID,
         dateOfTheEvent
-    }]));
+    }]).select('id'));
     if (!createEventResponse.success) return res.status(500).json({error: createEventResponse["error"]});
 
-    const createdEventIDResponse = await executeQuery(supabase.from('Events').select('id').eq('communityID', communityID).eq('userID', userID));
-    if (!createdEventIDResponse.success) return res.status(500).json({error: createdEventIDResponse["error"]});
-
-    let eventID = createdEventIDResponse.data[0]["id"];
+    let eventID = createEventResponse.data[0]["id"];
 
     const eventUserResponse = await executeQuery(supabase.from('EventUser').insert([{
         eventID,
@@ -138,31 +135,32 @@ app.post('/createEvent', async (req, res) => {
 });
 
 app.get('/userEvents', async (req, res) => {
-    const {userID} = req.body;
+    const {userID} = req.query;
 
     const userEventsResponse = await executeQuery(supabase.from('EventUser').select('*').eq('userID', userID));
     if (!userEventsResponse.success) return res.status(500).json({error: userEventsResponse["error"]});
 
-    const userEventsIDs = userEventsResponse.data.reduce(e => e["eventID"]);
+    const userEventsIDs = userEventsResponse.data.map(e => e['eventID']);
 
     const eventsResponse = await executeQuery(supabase.from('Events').select('*').in('id', userEventsIDs));
-    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse["error"]});
+    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse['error']});
 
     res.status(201).json({message: 'User events found!', data: eventsResponse.data});
 });
 
 app.get('/communityEvents', async (req, res) => {
-    const {communityID} = req.body;
+    const {communityID} = req.query;
 
-    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID));
+    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('dateOfTheEvent', {ascending: true}));
     if (!communityEventsResponse.success) return res.status(500).json({error: communityEventsResponse["error"]});
 
-    const communityEventsIDs = communityEventsResponse.data.reduce(e => e["communityID"]);
+    let i = 0;
+    for (const event of communityEventsResponse.data) {
+        let eventID = communityEventsResponse.data[i]['id'];
+        communityEventsResponse.data[i++]['imagePath'] = await getImage(`images/communities/${communityID}/${eventID}`);
+    }
 
-    const eventsResponse = await executeQuery(supabase.from('Events').select('*').in('id', communityEventsIDs));
-    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse["error"]});
-
-    res.status(201).json({message: 'User events found!', data: eventsResponse.data});
+    res.status(201).json({message: 'Community events found!', data: communityEventsResponse.data});
 });
 
 app.get('/events', async (req, res) => {
@@ -423,6 +421,20 @@ app.post('/joinEvent', async (req, res) => {
     }
 });
 
+app.post('/leaveEvent', async (req, res) => {
+    const {userID, communityID, eventID} = req.body;
+
+    const leaveEventUserResponse = await executeQuery(supabase.from('EventUser').delete().eq('userID', userID).eq('communityID', communityID).eq('eventID', eventID));
+    if (!leaveEventUserResponse["success"]) return res.status(500).json({error: leaveEventUserResponse["error"]});
+
+
+    const leaveEventResponse = await executeQuery(supabase.from('EventUser').delete().eq('userID', userID).eq('communityID', communityID).eq('eventID', eventID));
+    if (!leaveEventResponse["success"]) return res.status(500).json({error: leaveEventResponse["error"]});
+
+
+    res.status(201).json({message: 'Event abandoned!', data: leaveEventResponse["data"]});
+});
+
 app.post('/joinCommunity', async (req, res) => {
     const {userID, communityID} = req.body;
 
@@ -476,7 +488,6 @@ app.get("/users", async (req, res) => {
   return res.status(201).json({ message: 'Usuarios encontrados', data });
 });
 
-
 app.get('/updateusers', async (req, res) => {
   const { userID, communityID, role } = req.query;
 
@@ -509,4 +520,15 @@ app.get('/community', async (req, res) => {
   if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
   const data = communityResponse.data;
   return res.status(201).json({ message: 'Usuarios encontrados', data });
+});
+
+app.get('getCommunity', async (res, req) => {
+    const {communityID} = req.query;
+
+    const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('communityID', communityID));
+    if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
+
+    communityResponse.data[0]['imagePath'] = await getImage(`images/communities/${communityID}`);
+
+    return res.status(201).json({ message: 'Community found!', data: communityResponse.data });
 });
