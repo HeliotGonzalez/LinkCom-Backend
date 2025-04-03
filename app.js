@@ -1,5 +1,5 @@
 // app.js
-import express, { json } from 'express';
+import express from 'express';
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
@@ -36,6 +36,20 @@ app.get('/removeCommunity', async (req, res) => {
 
     const removeCommunityUserResponse = await executeQuery(supabase.from('CommunityUser').delete().eq('communityID', communityID));
     if (!removeCommunityUserResponse["success"]) return res.status(500).json({error: removeCommunityUserResponse["error"]});
+
+    const removeCommunityEventUserResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('communityID', communityID)
+    )
+    if (!removeCommunityEventUserResponse["success"]) return res.status(500).json({error: removeCommunityEventUserResponse["error"]});
+
+    const removeCommunityEventResponse = await executeQuery(
+        supabase.from('Events')
+            .delete()
+            .eq('communityID', communityID)
+    )
+    if (!removeCommunityEventResponse["success"]) return res.status(500).json({error: removeCommunityEventResponse["error"]});
 
     const removeCommunityResponse = await executeQuery(supabase.from('Communities').delete().eq('id', communityID));
     if (!removeCommunityResponse["success"]) return res.status(500).json({error: removeCommunityResponse["error"]});
@@ -272,109 +286,154 @@ app.post('/login', async (req, res) => {
 
 // GET /Feed -> Devuelve la lista de eventos y anuncios recientes de las comunidades a las que pertenece el usuario
 app.get('/feed', async (req, res) => {
-  const { userId } = req.query;
-  if (!userId) {
-    return res.status(400).json({ error: 'El parámetro userId es requerido' });
-  }
-
-  try {
-    // 1. Buscar el usuario
-    const user = await getUser(userId);
-
-    // 2. Obtener las comunidades a las que pertenece el usuario
-    const communityIds = await getCommunityIds(userId);
-    if (communityIds.length === 0) {
-      return res.json([]);
+    const {userId} = req.query;
+    if (!userId) {
+        return res.status(400).json({error: 'El parámetro userId es requerido'});
     }
 
-    // 3. Definir la fecha límite: hace 2 días
-    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+        // 1. Buscar el usuario
+        const user = await getUser(userId);
 
-    // 4. Obtener eventos (excluyendo los ya unidos) y anuncios recientes
-    const eventsData = await getRecentEvents(communityIds, twoDaysAgo, userId);
-    const announcesData = await getRecentAnnounces(communityIds, twoDaysAgo);
+        // 2. Obtener las comunidades a las que pertenece el usuario
+        const communityIds = await getCommunityIds(userId);
+        if (communityIds.length === 0) {
+            return res.json([]);
+        }
 
-    // 5. Transformar los datos al formato del feed
-    const eventsFeed = eventsData.map(ev => ({
-      id: ev.id,           // Ajusta según tu esquema (puede ser "ID" o "id")
-      type: 'event',
-      communityID: ev.communityID,
-      title: ev.title,
-      content: ev.description,
-      date: ev.created_at,
-    }));
+        // 3. Definir la fecha límite: hace 2 días
+        const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
 
-    const announcesFeed = announcesData.map(an => ({
-      id: an.id,
-      type: 'news',
-      title: an.title,
-      content: an.content,
-      date: an.created_at,
-    }));
+        // 4. Obtener eventos (excluyendo los ya unidos) y anuncios recientes
+        const eventsData = await getRecentEvents(communityIds, twoDaysAgo, userId);
+        const announcesData = await getRecentAnnounces(communityIds, twoDaysAgo);
 
-    // 6. Combinar y ordenar (más recientes primero)
-    const combinedFeed = [...eventsFeed, ...announcesFeed].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    );
+        // 5. Transformar los datos al formato del feed
+        const eventsFeed = eventsData.map(ev => ({
+            id: ev.ID,           // Ajusta según tu esquema (puede ser "ID" o "id")
+            type: 'event',
+            communityID: ev.communityID,
+            title: ev.title,
+            content: ev.description,
+            date: ev.created_at,
+        }));
 
-    return res.json(combinedFeed);
+        const announcesFeed = announcesData.map(an => ({
+            id: an.ID,
+            type: 'news',
+            title: an.title,
+            content: an.content,
+            date: an.created_at,
+        }));
 
-  } catch (error) {
-    console.error('Error al obtener feed:', error);
-    res.status(500).json({ error: error.message });
-  }
+        // 6. Combinar y ordenar (más recientes primero)
+        const combinedFeed = [...eventsFeed, ...announcesFeed].sort(
+            (a, b) => new Date(b.date) - new Date(a.date)
+        );
+
+        return res.json(combinedFeed);
+
+    } catch (error) {
+        console.error('Error al obtener feed:', error);
+        res.status(500).json({error: error.message});
+    }
 });
 
-// GET /nonBelongingCommunities -> Devuelve la lista de comunidades públicas desde la tabla "Communities"
+app.get('/communitiesEventsExcludingUser', async (req, res) => {
+    const {userID} = req.query;
+
+    const userCommunitiesIDsResponse = await executeQuery(
+        supabase.from('CommunityUser')
+            .select('communityID')
+            .eq('userID', userID)
+    );
+    if (!userCommunitiesIDsResponse.success) return res.status(500).json({
+        error: userCommunitiesIDsResponse["error"],
+        message: "Getting userCommunitiesIDsResponse"
+    });
+    userCommunitiesIDsResponse.data = userCommunitiesIDsResponse.data.map(e => e['communityID']);
+
+    const publicUserCommunitiesResponse = await executeQuery(
+        supabase.from('Communities')
+            .select('id')
+            .eq('isPrivate', false)
+            .in('id', userCommunitiesIDsResponse.data)
+    );
+    if (!publicUserCommunitiesResponse.success) return res.status(500).json({
+        error: publicUserCommunitiesResponse["error"],
+        message: "Getting publicUserCommunitiesResponse"
+    });
+
+    const userCommunitiesIDs = publicUserCommunitiesResponse.data.map(e => e['id']);
+
+    const userCommunitiesEventsIDs = await executeQuery(
+        supabase.from('EventUser')
+            .select('eventID')
+            .eq('userID', userID)
+            .in('communityID', userCommunitiesIDs)
+    );
+    if (!userCommunitiesEventsIDs.success) return res.status(500).json({
+        error: userCommunitiesEventsIDs["error"],
+        message: "Getting eventsIDsExcludingUserResponse"
+    });
+    userCommunitiesEventsIDs.data = userCommunitiesEventsIDs.data.map(e => e['eventID']);
+
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+
+    const userCommunitiesEventsExcludingUserResponse = await executeQuery(
+        supabase.from('Events')
+            .select('*')
+            .not('id', 'in', `(${userCommunitiesEventsIDs.data.join(',')})`)
+            .in('communityID', userCommunitiesIDs)
+            .gte('created_at', twoDaysAgo)
+            .order('created_at', {ascending: true})
+    );
+    if (!userCommunitiesEventsExcludingUserResponse.success) return res.status(500).json({
+        error: userCommunitiesEventsExcludingUserResponse["error"],
+        message: "Getting userCommunitiesEventsExcludingUserResponse"
+    });
+
+    return res.status(201).json({
+        message: 'Event created successfully',
+        data: userCommunitiesEventsExcludingUserResponse.data
+    });
+});
+
+// GET /nonBelongingCommunities -> Devuelve la lista de comunidades desde la tabla "Communities"
 app.get('/nonBelongingCommunities', async (req, res) => {
-  const { userId } = req.query;
+    const {userId} = req.query;
 
-  if (!userId) {
-    return res.status(400).json({ error: 'El parámetro userId es requerido' });
-  }
-
-  try {
-    // 1. Verificar que el usuario exista
-    const { data: user, error: userError } = await supabase
-      .from('Users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-      
-    if (userError || !user) {
-      return res.status(400).json({ error: 'Usuario no encontrado' });
+    if (!userId) {
+        return res.status(400).json({error: 'El parámetro userId es requerido'});
     }
 
-    // 2. Consulta: Obtener comunidades públicas
-    const { data: communitiesData, error: communitiesError } = await supabase
-      .from('Communities')
-      .select('id, userID, name, description, created_at')
-      .eq('isPrivate', false);
-    if (communitiesError) {
-      return res.status(500).json({ error: communitiesError.message });
+    try {
+        const {data: user, error: userError} = await supabase.from('Users').select('*').eq('id', userId).single();
+
+        // Consulta 1: Obtener comunidades públicas
+        const {data, error} = await supabase.from('Communities').select('id, userID, name, description, created_at')
+            .eq('isPrivate', false)
+            .limit(3);
+
+        // Consulta 2: Obtener las comunidades en las que el usuario ya está
+        const {data: memberships, error: membershipsError} = await supabase
+            .from('CommunityUser')
+            .select('communityID')
+            .eq('userID', user.id);
+
+        // Extraer los IDs de las comunidades a las que pertenece el usuario
+        const membershipIDs = memberships.map(item => item.communityID);
+
+        // Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
+        const filteredCommunities = data.filter(community => !membershipIDs.includes(community.id));
+
+
+        if (error) return res.status(500).json({error: error.message});
+        return res.json(filteredCommunities);
+
+    } catch (error) {
+        res.status(500).json({error: error.message});
     }
-
-    // 3. Consulta: Obtener las comunidades a las que ya pertenece el usuario
-    const { data: memberships, error: membershipsError } = await supabase
-      .from('CommunityUser')
-      .select('communityID')
-      .eq('userID', user.id);
-    if (membershipsError) {
-      return res.status(500).json({ error: membershipsError.message });
-    }
-
-    // 4. Extraer los IDs de las comunidades en las que el usuario ya está
-    const membershipIDs = memberships.map(item => item.communityID);
-
-    // 5. Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
-    const filteredCommunities = communitiesData.filter(community => !membershipIDs.includes(community.id));
-
-    return res.json(filteredCommunities);
-    
-  } catch (error) {
-    console.error('Error al obtener comunidades:', error);
-    return res.status(500).json({ error: error.message });
-  }
 });
 
 // GET /events -> Devuelve los eventos a los que el usuario pertenece
@@ -424,7 +483,7 @@ app.post('/joinEvent', async (req, res) => {
     const created_at = new Date().toISOString();
 
     try {
-        const {data, error} = await supabase.from('EventUser').insert([{userID, eventID, communityID}]);
+        const {data, error} = await supabase.from('EventUser').insert([{userID, eventID, communityID, created_at}]);
 
         if (error) {
             console.error('Error al crear EventUser:', error);
@@ -450,8 +509,6 @@ app.post('/joinCommunity', async (req, res) => {
     const communityRole = 'member';
 
     try {
-        console.log('userID:', userID);
-        console.log('communityID:', communityID);
         const {data, error} = await supabase.from('CommunityUser').insert([{
             userID,
             communityID,
@@ -514,14 +571,79 @@ app.get('/updateusers', async (req, res) => {
 });
 
 app.get('/community', async (req, res) => {
-  const { communityID } = req.query;
+    const { communityID } = req.query;
 
-  if (!communityID) {
-    return res.status(400).json({ error: 'communityID es requerido' });
-  }
+    if (!communityID) {
+        return res.status(400).json({error: 'communityID es requerido'});
+    }
 
-  const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
-  if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
-  const data = communityResponse.data;
-  return res.status(201).json({ message: 'Usuarios encontrados', data });
+    const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
+    if (!communityResponse.success) return res.status(500).json({error: communityResponse["error"]});
+
+    communityResponse.data[0]['imagePath'] = await getImage(`images/communities/${communityID}/communityImage.png`);
+
+    return res.status(201).json({message: 'Usuarios encontrados', data: communityResponse.data});
+});
+
+app.post('/leaveCommunity', async (req, res) => {
+    const { userID, communityID } = req.body;
+
+    const leaveCommunityResponse = await executeQuery(
+        supabase.from('CommunityUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveCommunityResponse.success) return res.status(500).json({error: leaveCommunityResponse["error"]});
+
+    console.log(leaveCommunityResponse.data)
+
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
+    return res.status(201).json({message: 'Community left properly', data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}});
+});
+
+app.post('/leaveEvent', async (req, res) => {
+    const { userID, eventID } = req.body;
+
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('eventID', eventID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
+    return res.status(201).json({message: 'Event left properly', data: leaveEventResponse.data});
+});
+
+app.get('/userCommunities', async (req, res) => {
+    const { userID } = req.query;
+
+    const userCommunitiesIDsResponse = await executeQuery(
+        supabase.from('CommunityUser')
+            .select('communityID')
+            .eq('userID', userID)
+    );
+    if (!userCommunitiesIDsResponse.success) return res.status(500).json({error: userCommunitiesIDsResponse["error"]});
+
+    userCommunitiesIDsResponse.data = userCommunitiesIDsResponse.data.map(c => c['communityID']);
+
+    const userCommunitiesResponse = await executeQuery(
+        supabase.from('Communities')
+            .select('id')
+            .in('id', userCommunitiesIDsResponse.data)
+    );
+    if (!userCommunitiesResponse.success) return res.status(500).json({error: userCommunitiesResponse["error"]});
+
+    return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
 });
