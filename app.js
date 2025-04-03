@@ -525,3 +525,30 @@ app.get('/community', async (req, res) => {
   const data = communityResponse.data;
   return res.status(201).json({ message: 'Usuarios encontrados', data });
 });
+
+app.post('/leaveCommunity', async (req, res) => {
+  const { userID, communityID } = req.body;
+
+  if (!userID || !communityID) {
+    return res.status(400).json({ error: 'userID y communityID son requeridos' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('CommunityUser')
+      .delete()
+      .eq('userID', userID)
+      .eq('communityID', communityID);
+
+    if (error) {
+      console.error('Error al salir de la comunidad:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.status(200).json({ message: 'El usuario ha salido de la comunidad correctamente', data });
+
+  } catch (err) {
+    console.error('Error inesperado al salir de la comunidad:', err);
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
+});
