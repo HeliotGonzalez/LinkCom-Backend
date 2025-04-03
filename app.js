@@ -579,104 +579,60 @@ app.get("/users", async (req, res) => {
 app.get('/updateusers', async (req, res) => {
     const {userID, communityID, role} = req.query;
 
-    if (!userID || !communityID || !role) {
-        return res.status(400).json({error: 'userID, communityID y role son requeridos'});
+  if (!userID || !communityID || !role) {
+    return res.status(400).json({ error: 'userID, communityID y role son requeridos' });
+  }
+
+  try {
+    const { data, error } = await supabase.from('CommunityUser').update({ communityRole: role }).eq('userID', userID).eq('communityID', communityID);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
+  
+    return res.status(201).json({ message: 'El usuario ha actualizado su rol correctamente', data });
 
-    try {
-        const {
-            data,
-            error
-        } = await supabase.from('CommunityUser').update({communityRole: role}).eq('userID', userID).eq('communityID', communityID);
-
-        if (error) {
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'El usuario ha actualizado su rol correctamente', data});
-
-    } catch (err) {
-        return res.status(500).json({error: 'Error inesperado'});
-    }
+  } catch (err) {
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
 });
 
 app.get('/community', async (req, res) => {
-    const {communityID} = req.query;
+  const { communityID } = req.query;
 
-    if (!communityID) {
-        return res.status(400).json({error: 'communityID es requerido'});
-    }
+  if (!communityID) {
+    return res.status(400).json({ error: 'communityID es requerido' });
+  }
 
-    const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
-    if (!communityResponse.success) return res.status(500).json({error: communityResponse["error"]});
-
-    communityResponse.data[0]['imagePath'] = await getImage(`images/communities/${communityID}/communityImage.png`);
-
-    return res.status(201).json({message: 'Usuarios encontrados', data: communityResponse.data});
+  const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
+  if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
+  const data = communityResponse.data;
+  return res.status(201).json({ message: 'Usuarios encontrados', data });
 });
 
 app.post('/leaveCommunity', async (req, res) => {
-    const {userID, communityID} = req.body;
+  const { userID, communityID } = req.body;
 
-    const leaveCommunityResponse = await executeQuery(
-        supabase.from('CommunityUser')
-            .delete()
-            .eq('userID', userID)
-            .eq('communityID', communityID)
-            .select('*')
-    );
-    if (!leaveCommunityResponse.success) return res.status(500).json({error: leaveCommunityResponse["error"]});
+  if (!userID || !communityID) {
+    return res.status(400).json({ error: 'userID y communityID son requeridos' });
+  }
 
-    console.log(leaveCommunityResponse.data)
+  try {
+    const { data, error } = await supabase
+      .from('CommunityUser')
+      .delete()
+      .eq('userID', userID)
+      .eq('communityID', communityID);
 
-    const leaveEventResponse = await executeQuery(
-        supabase.from('EventUser')
-            .delete()
-            .eq('userID', userID)
-            .eq('communityID', communityID)
-            .select('*')
-    );
-    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+    if (error) {
+      console.error('Error al salir de la comunidad:', error);
+      return res.status(500).json({ error: error.message });
+    }
 
-    return res.status(201).json({
-        message: 'Community left properly',
-        data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}
-    });
-});
+    return res.status(200).json({ message: 'El usuario ha salido de la comunidad correctamente', data });
 
-app.post('/leaveEvent', async (req, res) => {
-    const {userID, eventID} = req.body;
-
-    const leaveEventResponse = await executeQuery(
-        supabase.from('EventUser')
-            .delete()
-            .eq('userID', userID)
-            .eq('eventID', eventID)
-            .select('*')
-    );
-    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
-
-    return res.status(201).json({message: 'Event left properly', data: leaveEventResponse.data});
-});
-
-app.get('/userCommunities', async (req, res) => {
-    const {userID} = req.query;
-
-    const userCommunitiesIDsResponse = await executeQuery(
-        supabase.from('CommunityUser')
-            .select('communityID')
-            .eq('userID', userID)
-    );
-    if (!userCommunitiesIDsResponse.success) return res.status(500).json({error: userCommunitiesIDsResponse["error"]});
-
-    userCommunitiesIDsResponse.data = userCommunitiesIDsResponse.data.map(c => c['communityID']);
-
-    const userCommunitiesResponse = await executeQuery(
-        supabase.from('Communities')
-            .select('id')
-            .in('id', userCommunitiesIDsResponse.data)
-    );
-    if (!userCommunitiesResponse.success) return res.status(500).json({error: userCommunitiesResponse["error"]});
-
-    return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
+  } catch (err) {
+    console.error('Error inesperado al salir de la comunidad:', err);
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
 });
