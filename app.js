@@ -525,3 +525,37 @@ app.get('/community', async (req, res) => {
   const data = communityResponse.data;
   return res.status(201).json({ message: 'Usuarios encontrados', data });
 });
+
+
+app.post('/createAnnouncement', async (req, res) => {
+  const {title, body, communityID, userID, communityName, publisherID} = req.body;
+
+    if (!userID || !title || !body || !communityID || !communityName || !publisherID) {
+        return res.status(400).json({error: 'Todos los campos son requeridos'});
+    }
+
+    // Asignar la fecha de creación actual en formato ISO
+    const created_at = new Date().toISOString();
+
+    try {
+        console.log('userID:', userID);
+        console.log('communityID:', communityID);
+        const {data, error} = await supabase.from('Announces').insert([{
+          title, 
+          body, 
+          communityID, 
+          userID, 
+          communityName, 
+          publisherID
+        }]);
+
+        if (error) {
+            return res.status(500).json({error: error.message});
+        }
+
+        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
+
+    } catch (err) {
+        return res.status(500).json({error: 'Error inesperado'});
+    }
+});
