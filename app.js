@@ -594,6 +594,15 @@ app.get('/community', async (req, res) => {
 app.post('/leaveCommunity', async (req, res) => {
     const { userID, communityID } = req.body;
 
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
     const leaveCommunityResponse = await executeQuery(
         supabase.from('CommunityUser')
             .delete()
@@ -604,15 +613,6 @@ app.post('/leaveCommunity', async (req, res) => {
     if (!leaveCommunityResponse.success) return res.status(500).json({error: leaveCommunityResponse["error"]});
 
     console.log(leaveCommunityResponse.data)
-
-    const leaveEventResponse = await executeQuery(
-        supabase.from('EventUser')
-            .delete()
-            .eq('userID', userID)
-            .eq('communityID', communityID)
-            .select('*')
-    );
-    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
 
     return res.status(201).json({message: 'Community left properly', data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}});
 });
@@ -695,7 +695,7 @@ app.get('/announcements', async (req, res) => {
     }
 
     try {
-        const {data, error} = await supabase.from('Announces').select('*').eq('communityID', communityID);
+        const {data, error} = await supabase.from('Announces').select('*').eq('communityID', communityID).order('created_at', { ascending: true });
         if (error) {
             console.log(error);
             return res.status(500).json({error: error.message});
@@ -708,3 +708,40 @@ app.get('/announcements', async (req, res) => {
     }
 
 });
+
+async function registerUser(data) {
+    const {email, password, username, description} = data;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    try {
+        // Register the user with Supabase Auth
+        const {data, error} = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            console.error('Error during user registration:', error);
+        }
+
+        // Insert additional user data into the Users table
+        const {data: userData, error: userError} = await supabase.from('Users').insert([
+            {
+                id: data.user.id, // Use the ID from Supabase Auth
+                username: username,
+                email: email,
+                description: description,
+            },
+        ]);
+
+        if (userError) {
+            console.error('Error inserting user into Users table:', userError);
+        }
+
+        res.status(201).json({message: 'User registered successfully', user: userData});
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
