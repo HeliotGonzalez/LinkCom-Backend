@@ -686,3 +686,25 @@ app.post('/createAnnouncement', async (req, res) => {
         return res.status(500).json({error: 'Error inesperado'});
     }
 });
+
+app.get('/announcements', async (req, res) => {
+    const {communityID} = req.query;
+
+    if (!communityID) {
+        return res.status(400).json({error: 'El parámetro communityID es requerido'});
+    }
+
+    try {
+        const {data, error} = await supabase.from('Announces').select('*').eq('communityID', communityID);
+        if (error) {
+            console.log(error);
+            return res.status(500).json({error: error.message});
+        }
+        console.log(res);
+        return res.json({data});
+
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+
+});
