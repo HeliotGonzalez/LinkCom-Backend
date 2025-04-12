@@ -1,9 +1,11 @@
-// app.js
+// application.js
 import express from 'express';
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
 import {getImage, saveImage} from "./imagesStore.js";
+import communityRouter from './application/routes/CommunityRoutes.js';
+import communityUserRouter from './application/routes/CommunityUserRoutes.js';
 
 const app = express();
 
@@ -27,6 +29,9 @@ const executeQuery = async (query) => {
 
     return {success: true, data};
 };
+
+app.use('/communities', communityRouter);
+app.use('/communityUser', communityUserRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
@@ -653,3 +658,5 @@ app.get('/userCommunities', async (req, res) => {
 
     return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
 });
+
+export default app;
