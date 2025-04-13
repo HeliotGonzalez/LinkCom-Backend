@@ -1,20 +1,20 @@
 /**
  * @interface
  */
-export class Controller {
-    async get() {
+export class Repository {
+    get() {
         throw new Error('Method not implemented');
     }
 
-    async put() {
+    create() {
         throw new Error('Method not implemented');
     }
 
-    async delete() {
+    remove() {
         throw new Error('Method not implemented');
     }
 
-    async patch() {
+    update() {
         throw new Error('Method not implemented');
     }
 }

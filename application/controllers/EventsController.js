@@ -4,26 +4,26 @@ import {HTTPCodesMap, HTTPMethodsMap} from "../utils/HTTPUtils.js";
 /**
  * @implements {Controller}
  */
-export class CommunityUserController extends Controller {
+export class EventsController extends Controller {
     constructor(service) {
         super();
         this.service = service;
     }
 
     async put(req, res) {
-        return this.handleError(HTTPMethodsMap.PUT, res, await this.service.join({...req.body, communityID: req.params.communityID}));
+        return this.handleError(HTTPMethodsMap.PUT, res, await this.service.create({...req.body, communityID: req.params.communityID}));
     }
 
     async get(req, res) {
-        return this.handleError(HTTPMethodsMap.GET, res, await this.service.members({...req.query, communityID: req.params.communityID}));
+        return this.handleError(HTTPMethodsMap.GET, res, await this.service.get(!req.params.id ? req.query : {...req.query, id: req.params.id}));
     }
 
     async patch(req, res) {
-        return this.handleError(HTTPMethodsMap.PATCH, res, await this.service.changeRole({...req.query, communityID: req.params.communityID}, req.body));
+        return this.handleError(HTTPMethodsMap.PATCH, res, await this.service.update({...req.query, id: req.params.id}, req.body));
     }
 
     async delete(req, res) {
-        return this.handleError(HTTPMethodsMap.DELETE, res, await this.service.leave({userID: req.params.userID, communityID: req.params.communityID}));
+        return this.handleError(HTTPMethodsMap.DELETE, res, await this.service.delete({...req.query, id: req.params.id}));
     }
 
     handleError(method, res, serviceResponse) {

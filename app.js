@@ -5,7 +5,7 @@ import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
 import {getImage, saveImage} from "./imagesStore.js";
 import communityRouter from './application/routes/CommunityRoutes.js';
-import communityUserRouter from './application/routes/CommunityUserRoutes.js';
+import eventsRouter from './application/routes/EventsRoutes.js';
 
 const app = express();
 
@@ -31,7 +31,7 @@ const executeQuery = async (query) => {
 };
 
 app.use('/communities', communityRouter);
-app.use('/communityUser', communityUserRouter);
+app.use('/events', eventsRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
@@ -66,14 +66,14 @@ app.post('/createCommunity', async (req, res) => {
     const {userID, description, name, isPrivate, img, communityInterests} = req.body;
 
     const createCommunityResponse = await executeQuery(supabase.from('Communities').insert([{
-        userID,
+        creatorID: userID,
         description,
         name,
         isPrivate,
     }]));
     if (!createCommunityResponse["success"]) return res.status(500).json({error: createCommunityResponse["error"]});
 
-    const createdCommunityIDResponse = await executeQuery(supabase.from('Communities').select('id').eq('userID', userID).eq('name', name));
+    const createdCommunityIDResponse = await executeQuery(supabase.from('Communities').select('id').eq('creatorID', userID).eq('name', name));
     if (!createCommunityResponse["success"]) return res.status(500).json({error: createdCommunityIDResponse["error"]});
 
     const communityID = createdCommunityIDResponse['data'][0]['id'];
@@ -92,7 +92,7 @@ app.post('/createCommunity', async (req, res) => {
     const setUserCommunityResponse = await executeQuery(supabase.from('CommunityUser').insert([{
         communityID,
         userID,
-        communityRole: "creator"
+        communityRole: "administrator"
     }]));
     if (!setUserCommunityResponse["success"]) return res.status(500).json({error: setUserCommunityResponse["error"]});
 

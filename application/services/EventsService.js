@@ -3,29 +3,29 @@ import {Service} from "../../architecture/model/Service.js";
 /**
  * @implements {Service}
  */
-export class CommunityUserService extends Service {
+export class EventsService extends Service {
     constructor(repository) {
         super();
         this._repository = repository;
     }
 
     repository() {
-        return this._repository;
+        return undefined;
     }
 
-    async join(parameters) {
+    async create(parameters) {
         return await this._repository.create(parameters);
     }
 
-    async members(query) {
+    async get(query) {
         return await this._repository.get(query);
     }
 
-    async changeRole(query, parameters) {
+    async update(query, parameters) {
         return await this._repository.update(query, parameters);
     }
 
-    async leave(query) {
+    async remove(query) {
         return await this._repository.remove(query);
     }
 }

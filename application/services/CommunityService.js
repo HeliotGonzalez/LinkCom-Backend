@@ -1,4 +1,4 @@
-import {Service} from "../../architecture/Service.js";
+import {Service} from "../../architecture/model/Service.js";
 
 /**
  * @implements {Service}
@@ -13,19 +13,19 @@ export class CommunityService extends Service {
         return this._repository;
     }
 
-    async getAll() {
-        return await this._repository.getAll();
-    }
-
-    async get(id) {
-        return await this._repository.get(id);
-    }
-
     async create(parameters) {
         return await this._repository.create(parameters);
     }
 
-    async update(parameters) {
-        return await this._repository.update(parameters);
+    async get(query) {
+        return await this._repository.get(query);
+    }
+
+    async update(query, parameters) {
+        return await this._repository.update(query, parameters);
+    }
+
+    async delete(query) {
+        return await this._repository.remove(query);
     }
 }

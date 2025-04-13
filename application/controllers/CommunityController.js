@@ -1,30 +1,5 @@
-import {Controller} from "../../architecture/Controller.js";
-
-export const HTTPMethodsMap = {
-    GET: 'GET',
-    PUT: 'PUT',
-    DELETE: 'DELETE',
-    PATCH: 'PATCH'
-}
-
-export const HTTPCodesMap = {
-    'GET': {
-        SUCCESS: 200,
-        ERROR: 404
-    },
-    'PUT': {
-        SUCCESS: 201,
-        ERROR: 200
-    },
-    'DELETE': {
-        SUCCESS: 204,
-        ERROR: 404
-    },
-    'PATCH': {
-        SUCCESS: 200,
-        ERROR: 204
-    }
-}
+import {Controller} from "../../architecture/control/Controller.js";
+import {HTTPCodesMap, HTTPMethodsMap} from "../utils/HTTPUtils.js";
 
 /**
  * @implements {Controller}
@@ -35,25 +10,20 @@ export class CommunityController extends Controller {
         this.service = service;
     }
 
-    async get(req, res) {
-        return this.handleError(
-                HTTPMethodsMap.GET, res,
-                Object.keys(req.params).length ?
-                        await this.service.get(req.params.id) :
-                        await this.service.getAll()
-        );
-    }
-
     async put(req, res) {
         return this.handleError(HTTPMethodsMap.PUT, res, await this.service.create(req.body))
     }
 
-    async delete(req, res) {
-        return this.handleError(HTTPMethodsMap.DELETE, res, await this.service.delete(req.params.id));
+    async get(req, res) {
+        return this.handleError(HTTPMethodsMap.GET, res, await this.service.get(!req.params.id ? req.query : {...req.query, id: req.params.id}));
     }
 
     async patch(req, res) {
-        return this.handleError(HTTPMethodsMap.PATCH, res, await this.service.update(req.body));
+        return this.handleError(HTTPMethodsMap.PATCH, res, await this.service.update({...req.query, id: req.params.id}, req.body));
+    }
+
+    async delete(req, res) {
+        return this.handleError(HTTPMethodsMap.DELETE, res, await this.service.delete({...req.query, id: req.params.id}));
     }
 
     handleError(method, res, serviceResponse) {
