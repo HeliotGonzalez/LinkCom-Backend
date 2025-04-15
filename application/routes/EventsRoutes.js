@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {EventsController} from "../controllers/EventsController.js";
 import {EventsService} from "../services/EventsService.js";
-import {SupabaseRepository} from "../repositories/supabaseRepository.js";
+import {SupabaseRepository} from "../repositories/SupabaseRepository.js";
 
 const router = Router();
 const eventsController = new EventsController(new EventsService(new SupabaseRepository('Events')));

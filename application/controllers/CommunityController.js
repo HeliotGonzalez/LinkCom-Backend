@@ -26,10 +26,27 @@ export class CommunityController extends Controller {
         return this.handleError(HTTPMethodsMap.DELETE, res, await this.service.delete({...req.query, id: req.params.id}));
     }
 
-    handleError(method, res, serviceResponse) {
-        return res.status(HTTPCodesMap[method][serviceResponse.success ? 'SUCCESS' : 'ERROR']).json({
+    async getNonBelongingCommunities(req, res) {
+        const { userId } = req.query;
+        if (!userId) {
+          return res.status(400).json({ error: 'El parámetro userId es requerido' });
+        }
+    
+        try {
+          const communities = await this.service.getNonBelongingCommunities(userId);
+          return res.json(communities);
+        } catch (error) {
+          console.error('Error al obtener comunidades:', error);
+          return res.status(500).json({ error: error.message });
+        }
+      }
+    
+      handleError(method, res, serviceResponse) {
+        return res
+          .status(HTTPCodesMap[method][serviceResponse.success ? 'SUCCESS' : 'ERROR'])
+          .json({
             message: serviceResponse.message,
             data: serviceResponse.data
-        });
-    }
+          });
+      }
 }

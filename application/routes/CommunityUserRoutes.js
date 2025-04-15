@@ -1,6 +1,6 @@
 import {Router} from "express";
-import {CommunityUserController} from "../controllers/CommunityUserController.js";
-import {CommunityUserService} from "../services/CommunityUserService.js";
+import {CommunityUserController} from "../controllers/communityUserController.js";
+import {CommunityUserService} from "../services/communityUserService.js";
 import {CommunityUserRepository} from "../repositories/CommunityUserRepository.js";
 
 const router = Router();

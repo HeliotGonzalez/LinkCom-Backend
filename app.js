@@ -408,58 +408,6 @@ app.get('/communitiesEventsExcludingUser', async (req, res) => {
     });
 });
 
-// GET /nonBelongingCommunities -> Devuelve la lista de comunidades públicas desde la tabla "Communities"
-app.get('/nonBelongingCommunities', async (req, res) => {
-  const { userId } = req.query;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'El parámetro userId es requerido' });
-  }
-
-  try {
-    // 1. Verificar que el usuario exista
-    const { data: user, error: userError } = await supabase
-      .from('Users')
-      .select('*')
-      .eq('id', userId)
-      .single();
-      
-    if (userError || !user) {
-      return res.status(400).json({ error: 'Usuario no encontrado' });
-    }
-
-    // 2. Consulta: Obtener comunidades públicas
-    const { data: communitiesData, error: communitiesError } = await supabase
-      .from('Communities')
-      .select('id, userID, name, description, created_at')
-      .eq('isPrivate', false);
-    if (communitiesError) {
-      return res.status(500).json({ error: communitiesError.message });
-    }
-
-    // 3. Consulta: Obtener las comunidades a las que ya pertenece el usuario
-    const { data: memberships, error: membershipsError } = await supabase
-      .from('CommunityUser')
-      .select('communityID')
-      .eq('userID', user.id);
-    if (membershipsError) {
-      return res.status(500).json({ error: membershipsError.message });
-    }
-
-    // 4. Extraer los IDs de las comunidades en las que el usuario ya está
-    const membershipIDs = memberships.map(item => item.communityID);
-
-    // 5. Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
-    const filteredCommunities = communitiesData.filter(community => !membershipIDs.includes(community.id));
-
-    return res.json(filteredCommunities);
-    
-  } catch (error) {
-    console.error('Error al obtener comunidades:', error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
 // GET /events -> Devuelve los eventos a los que el usuario pertenece
 app.get('/getCalendarEvents', async (req, res) => {
     const {userID} = req.query;

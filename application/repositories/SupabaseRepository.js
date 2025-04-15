@@ -73,7 +73,7 @@ export class SupabaseRepository extends Repository {
         const {data, error} = await query;
 
         if (error) {
-            console.error('Error en Supabase:', error.message);
+            console.error('Error en Supabase:', error.message, '\nQuery: ', query);
             return {success: false, error: error.message};
         }
 
