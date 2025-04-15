@@ -6,6 +6,7 @@ import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './f
 import {getImage, saveImage} from "./imagesStore.js";
 import communityRouter from './application/routes/CommunityRoutes.js';
 import eventsRouter from './application/routes/EventsRoutes.js';
+import communityUserRouter from './application/routes/CommunityUserRoutes.js';
 
 const app = express();
 
@@ -32,6 +33,7 @@ const executeQuery = async (query) => {
 
 app.use('/communities', communityRouter);
 app.use('/events', eventsRouter);
+app.use('/communityUser', communityUserRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
@@ -465,36 +467,6 @@ app.post('/joinEvent', async (req, res) => {
         return res.status(201).json({message: 'EventUser creado correctamente', data});
     } catch (err) {
         console.error('Error inesperado:', err);
-        return res.status(500).json({error: 'Error inesperado'});
-    }
-});
-
-app.post('/joinCommunity', async (req, res) => {
-    const {userID, communityID} = req.body;
-
-    if (!userID || !communityID) {
-        return res.status(400).json({error: 'userID y communityID son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
-    const communityRole = 'member';
-
-    try {
-        const {data, error} = await supabase.from('CommunityUser').insert([{
-            userID,
-            communityID,
-            created_at,
-            communityRole
-        }]);
-
-        if (error) {
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
-
-    } catch (err) {
         return res.status(500).json({error: 'Error inesperado'});
     }
 });

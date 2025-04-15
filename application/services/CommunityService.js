@@ -58,13 +58,12 @@ export class CommunityService extends Service {
     const membershipIDs = membershipsRes.data.map(item => item.communityID);
 
     // 3. Construir el filtro para las comunidades públicas
-    // Por defecto filtramos que isPrivate sea false
     const filter = { isPrivate: "false" }; 
-
+    console.log('Comunidades a las que pertenezco: ', membershipIDs);
     // Si el usuario ya pertenece a algunas comunidades, agregamos el filtro "nin" para el id
     if (membershipIDs.length > 0) {
       // El formato para la comparación "nin" en el repositorio es: valor => "nin%valor1,valor2,..."
-      filter.id = `nin%${membershipIDs.join(',')}`;
+      filter.id = `nin%(${membershipIDs.join(',')})`;
     }
 
     // 4. Obtener las comunidades públicas que cumplan el filtro

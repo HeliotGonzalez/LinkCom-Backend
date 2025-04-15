@@ -64,7 +64,7 @@ export async function getRecentEvents(communityIds, twoDaysAgo, userId) {
  */
 export async function getRecentAnnounces(communityIds, twoDaysAgo) {
   const { data, error } = await supabase
-    .from('Announces')
+    .from('Announcements')
     .select('*')
     .in('communityID', communityIds)
     .gte('created_at', twoDaysAgo)

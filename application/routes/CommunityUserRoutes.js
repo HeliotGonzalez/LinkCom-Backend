@@ -1,10 +1,12 @@
 import {Router} from "express";
 import {CommunityUserController} from "../controllers/communityUserController.js";
 import {CommunityUserService} from "../services/communityUserService.js";
-import {CommunityUserRepository} from "../repositories/CommunityUserRepository.js";
+import { SupabaseRepository } from "../repositories/SupabaseRepository.js";
 
 const router = Router();
-const communityUserController = new CommunityUserController(new CommunityUserService(new CommunityUserRepository()));
+const communityUserController = new CommunityUserController(new CommunityUserService(new SupabaseRepository('CommunityUser')));
+
+router.post('/joinCommunity', async (req, res) => await communityUserController.joinCommunity(req, res));
 
 router.put('/:id/join', async (req, res) => await communityUserController.put(req, res));
 
