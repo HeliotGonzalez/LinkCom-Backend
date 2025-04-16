@@ -4,8 +4,8 @@ import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
 import {getImage, saveImage} from "./imagesStore.js";
-import communityRouter from './application/routes/CommunityRoutes.js';
-import eventsRouter from './application/routes/EventsRoutes.js';
+import communityRouter from './application/controllers/CommunityController.js';
+import userRouter from './application/controllers/UserController.js';
 
 const app = express();
 
@@ -31,7 +31,7 @@ const executeQuery = async (query) => {
 };
 
 app.use('/communities', communityRouter);
-app.use('/events', eventsRouter);
+app.use('/users', userRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
