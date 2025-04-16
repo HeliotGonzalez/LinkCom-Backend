@@ -7,6 +7,7 @@ import {getImage, saveImage} from "./imagesStore.js";
 import communityRouter from './application/routes/CommunityRoutes.js';
 import eventsRouter from './application/routes/EventsRoutes.js';
 import communityUserRouter from './application/routes/CommunityUserRoutes.js';
+import AnnouncementRoutes from './application/routes/AnnouncementRoutes.js'
 
 const app = express();
 
@@ -34,6 +35,7 @@ const executeQuery = async (query) => {
 app.use('/communities', communityRouter);
 app.use('/events', eventsRouter);
 app.use('/communityUser', communityUserRouter);
+app.use("/announcement", AnnouncementRoutes);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
