@@ -138,14 +138,14 @@ app.get('/communities', async (req, res) => {
 });
 
 app.post('/createEvent', async (req, res) => {
-    const {title, description, communityID, userID, dateOfTheEvent} = req.body;
+    const {title, description, communityID, userID, date} = req.body;
 
     const createEventResponse = await executeQuery(supabase.from('Events').insert([{
         title,
         description,
         communityID,
         userID,
-        dateOfTheEvent
+        date
     }]));
     if (!createEventResponse.success) return res.status(500).json({error: createEventResponse["error"]});
 
@@ -181,7 +181,7 @@ app.get('/userEvents', async (req, res) => {
 app.get('/communityEvents', async (req, res) => {
     const {communityID} = req.query;
 
-    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('dateOfTheEvent', {ascending: true}));
+    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('date', {ascending: true}));
     if (!communityEventsResponse.success) return res.status(500).json({error: communityEventsResponse["error"]});
 
     let i = 0;
