@@ -22,9 +22,14 @@ export class CommunityService extends Service {
     return await this._repository.get(query);
   }
 
-  async update(query, parameters) {
-    return await this._repository.update(query, parameters);
+// CommunityService.js
+async update(query, parameters, file) {
+  if (file) {
+    parameters.imagepath = file.path;
   }
+
+  return await this._repository.update(query, parameters);
+}
 
   async delete(query) {
     return await this._repository.remove(query);

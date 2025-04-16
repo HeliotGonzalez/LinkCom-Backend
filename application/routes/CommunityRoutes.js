@@ -5,6 +5,7 @@ import { CommunityService } from "../services/CommunityService.js";
 import { SupabaseRepository } from "../repositories/SupabaseRepository.js";
 import { CommunityUserController } from "../controllers/communityUserController.js";
 import { CommunityUserService } from "../services/communityUserService.js";
+import { upload } from "../../upload.js";
 
 const router = Router();
 
@@ -26,7 +27,10 @@ router.get('/nonBelongingCommunities', async (req, res) =>
 // Rutas genéricas
 router.put('/', async (req, res) => await communityController.put(req, res));
 router.get('/:id?', async (req, res) => await communityController.get(req, res));
-router.patch('/:id', async (req, res) => await communityController.patch(req, res));
+router.patch("/:id", upload.single("image"), async (req, res) => {
+  return await communityController.patch(req, res);
+});
+
 router.delete('/:id', async (req, res) => await communityController.delete(req, res));
 
 router.put('/:communityID/join', async (req, res) => await communityUserController.put(req, res));

@@ -19,7 +19,11 @@ export class CommunityController extends Controller {
     }
 
     async patch(req, res) {
-        return this.handleError(HTTPMethodsMap.PATCH, res, await this.service.update({...req.query, id: req.params.id}, req.body));
+      return this.handleError(
+        HTTPMethodsMap.PATCH,
+        res,
+        await this.service.update({ id: req.params.id }, req.body, req.file)
+      );
     }
 
     async delete(req, res) {
