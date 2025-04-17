@@ -6,6 +6,7 @@ import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './f
 import {getImage, saveImage} from "./application/utils/imagesStore.js";
 import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
+import eventRouter from './application/controllers/EventController.js';
 
 const app = express();
 
@@ -32,6 +33,7 @@ const executeQuery = async (query) => {
 
 app.use('/communities', communityRouter);
 app.use('/users', userRouter);
+app.use('events', eventRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;

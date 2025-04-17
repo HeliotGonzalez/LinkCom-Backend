@@ -6,4 +6,5 @@ import {UserService} from "../../architecture/io/services/UserService.js";
 export const serviceFactory = new ServiceFactory();
 serviceFactory
     .put('communities', new CommunityService(repositoryFactory))
-    .put('users', new UserService(repositoryFactory));
+    .put('users', new UserService(repositoryFactory))
+    .put('events', new EventService(repositoryFactory));

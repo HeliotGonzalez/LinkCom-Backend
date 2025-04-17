@@ -43,7 +43,11 @@ export class CommunityService extends Service {
         return await this.factory.get('CommunityUser').get(criteria);
     }
 
-    async excludingUser(criteria) {
-        return this.factory.get('Communities').get(criteria)
+    async announcements(criteria) {
+        return this.factory.get('Announcements').get(criteria);
+    }
+
+    async events(criteria) {
+        return this.factory.get('Events').get(criteria);
     }
 }

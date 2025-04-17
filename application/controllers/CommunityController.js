@@ -24,7 +24,7 @@ router.get('/:id?', async (req, res) => {
 });
 router.get('/excluding/:userID', async (req, res) => {
     const userCommunities = (await serviceFactory.get('users').communities([builderFactory.get('eq')('userID', req.params.userID).build()])).data.map(c => c.communityID);
-    return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(await serviceFactory.get('communities').excludingUser(
+    return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(await serviceFactory.get('communities').get(
         [builderFactory.get('nin')('id', userCommunities).build()]
     )));
 });
@@ -42,5 +42,7 @@ router.patch('/:communityID/:userID/changeRole', async (req, res) => handleError
     buildCriteriaFrom({...req.params, ...req.query})
 )));
 router.delete('/:communityID/:userID/leave', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').leave(buildCriteriaFrom({...req.params, ...req.query}))));
+router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))))
+router.get('/:communityID/events', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').events(buildCriteriaFrom({...req.params, ...req.query}))))
 
 export default router;
