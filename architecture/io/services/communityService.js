@@ -27,12 +27,12 @@ export class CommunityService extends Service {
         return await this.factory.get('Communities').remove(criteria);
     }
 
-    async join(communityID, userID, communityRole = 'creator') {
+    async join(communityID, userID, communityRole = 'administrator') {
         return await this.factory.get('CommunityUser').create({communityID, userID, communityRole});
     }
 
-    async leave(communityID, userID) {
-        return await this.factory.get('CommunityUser').remove({communityID, userID});
+    async leave(criteria) {
+        return await this.factory.get('CommunityUser').remove(criteria);
     }
 
     async changeRole(communityRole, criteria = []) {
