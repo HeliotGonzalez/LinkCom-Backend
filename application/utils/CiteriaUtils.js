@@ -1,7 +1,7 @@
 import {HTTPCodesMap} from "./HTTPUtils.js";
-import {CriteriaBuilder} from "../../architecture/io/CriteriaBuilder.js";
+import {CriteriaBuilder} from "../../architecture/io/criteria/CriteriaBuilder.js";
 import criteriaMap from "../io/criteria/CriteriaMap.js";
-import {CriteriaBuilderFactory} from "../../architecture/io/CriteriaBuilderFactory.js";
+import {CriteriaBuilderFactory} from "../../architecture/io/criteria/CriteriaBuilderFactory.js";
 
 export const handleError = (method, res, serviceResponse) => {
     return res.status(HTTPCodesMap[method][serviceResponse.success ? 'SUCCESS' : 'ERROR']).json({
@@ -21,15 +21,16 @@ export const buildCriteriaFrom = (criteriaFromQuery) => {
 }
 
 export const builderFactory = new CriteriaBuilderFactory();
-builderFactory.put(
-    'eq',
-    (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.eq).withKey(key).withValue(value)
-);
-builderFactory.put(
-    'neq',
-    (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.neq).withKey(key).withValue(value)
-);
-builderFactory.put(
-    'nin',
-    (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.nin).withKey(key).withValue(value)
-)
+builderFactory
+    .put(
+        'eq',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.eq).withKey(key).withValue(value)
+    )
+    .put(
+        'neq',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.neq).withKey(key).withValue(value)
+    )
+    .put(
+        'nin',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.nin).withKey(key).withValue(value)
+    )

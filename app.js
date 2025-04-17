@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
-import {getImage, saveImage} from "./imagesStore.js";
+import {getImage, saveImage} from "./application/utils/imagesStore.js";
 import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
 

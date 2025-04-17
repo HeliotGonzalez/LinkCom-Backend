@@ -1,4 +1,4 @@
-import {Criteria} from "../../../architecture/io/Criteria.js";
+import {Criteria} from "../../../architecture/io/criteria/Criteria.js";
 
 /**
  * @implements {Criteria}
