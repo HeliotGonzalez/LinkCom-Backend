@@ -2,6 +2,7 @@ import {ServiceFactory} from "../../architecture/io/services/ServiceFactory.js";
 import {CommunityService} from "../../architecture/io/services/communityService.js";
 import repositoryFactory from "./RepositoryFactory.js";
 import {UserService} from "../../architecture/io/services/UserService.js";
+import {EventService} from "../../architecture/io/services/EventService.js";
 
 export const serviceFactory = new ServiceFactory();
 serviceFactory

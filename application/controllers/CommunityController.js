@@ -2,13 +2,13 @@ import {Router} from "express";
 import {HTTPMethodsMap} from "../utils/HTTPUtils.js";
 import {buildCriteriaFrom, builderFactory, handleError} from "../utils/CiteriaUtils.js";
 import {serviceFactory} from "../utils/ServicesUtils.js";
-import {fillingCommunityImage, saveImage} from "../utils/imagesStore.js";
+import {fillingCommunityImage, fillingEventImage, saveImage} from "../utils/imagesStore.js";
 
 const router = Router();
 
 router.put('/', async (req, res) => {
-    const creationResponse = await serviceFactory.get('communities').create(req.body);
-    if (creationResponse.data && req.body.image) {
+    const creationResponse = await serviceFactory.get('communities').create(req.body.parameters, req.body.interests);
+    if (creationResponse.success && req.body.imagePath) {
         creationResponse.data.imagePath = await saveImage(req.body.image, `images/communities/${creationResponse.data.id}`);
         await serviceFactory.get('communities').update(
             [builderFactory.get('eq')('id', creationResponse.data.id).build()],
@@ -42,7 +42,7 @@ router.patch('/:communityID/:userID/changeRole', async (req, res) => handleError
     buildCriteriaFrom({...req.params, ...req.query})
 )));
 router.delete('/:communityID/:userID/leave', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').leave(buildCriteriaFrom({...req.params, ...req.query}))));
-router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))))
-router.get('/:communityID/events', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').events(buildCriteriaFrom({...req.params, ...req.query}))))
+router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))));
+router.get('/:communityID/events', async (req, res) => handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('communities').events(buildCriteriaFrom({...req.params, ...req.query})))));
 
 export default router;

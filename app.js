@@ -33,7 +33,7 @@ const executeQuery = async (query) => {
 
 app.use('/communities', communityRouter);
 app.use('/users', userRouter);
-app.use('events', eventRouter);
+app.use('/events', eventRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
