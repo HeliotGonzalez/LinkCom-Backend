@@ -24,3 +24,21 @@ export const getImage = async (imagePath) => {
     const imageBuffer = fs.readFileSync(route);
     return `data:image/png;base64,${imageBuffer.toString('base64')}`;
 };
+
+export const fillingCommunityImage = async (response) => {
+    if (response.success) for (let i = 0; i < response.data.length; i++){
+        response.data[i].imagePath = await getImage(
+            `images/communities/${response.data[i].id}/communityImage.png`
+        );
+    }
+    return response;
+}
+
+export const fillingEventImage = async (response) => {
+    if (response.success) for (let i = 0; i < response.data.length; i++){
+        response.data[i].imagePath = await getImage(
+            `images/communities/${response.data[i].communityID}/${response.data[i].id}/eventImage.png`
+        );
+    }
+    return response;
+}
