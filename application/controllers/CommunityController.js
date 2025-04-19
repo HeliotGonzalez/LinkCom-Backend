@@ -8,11 +8,11 @@ const router = Router();
 
 router.put('/', async (req, res) => {
     const creationResponse = await serviceFactory.get('communities').create(req.body.parameters, req.body.interests);
-    if (creationResponse.success && req.body.imagePath) {
-        creationResponse.data.imagePath = await saveImage(req.body.image, `images/communities/${creationResponse.data.id}`);
+    if (creationResponse.success && req.body.parameters.imagePath) {
+        creationResponse.data[0].imagePath = await saveImage(req.body.parameters.imagePath, `../../images/communities/${creationResponse.data[0].id}`);
         await serviceFactory.get('communities').update(
-            [builderFactory.get('eq')('id', creationResponse.data.id).build()],
-            {imagePath: creationResponse.data.imagePath}
+            [builderFactory.get('eq')('id', creationResponse.data[0].id).build()],
+            {imagePath: creationResponse.data[0].imagePath}
         );
     }
     return handleError(HTTPMethodsMap.PUT, res, creationResponse);
@@ -23,9 +23,9 @@ router.get('/:id?', async (req, res) => {
     )));
 });
 router.get('/excluding/:userID', async (req, res) => {
-    const userCommunities = (await serviceFactory.get('users').communities([builderFactory.get('eq')('userID', req.params.userID).build()])).data.map(c => c.communityID);
+    const userCommunities = (await serviceFactory.get('users').communities(buildCriteriaFrom({userID: req.params.userID}))).data.map(c => c.communityID);
     return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(await serviceFactory.get('communities').get(
-        [builderFactory.get('nin')('id', userCommunities).build()]
+        [...buildCriteriaFrom(req.query), builderFactory.get('nin')('id', userCommunities).build()]
     )));
 });
 router.patch('/:id', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').update(
@@ -35,11 +35,21 @@ router.delete('/:id', async (req, res) => handleError(HTTPMethodsMap.DELETE, res
     buildCriteriaFrom({...req.params, ...req.query})
 )));
 router.put('/:communityID/join', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').join(req.params.communityID, req.body.userID, 'member')));
-router.get('/:communityID/members', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').members(
-    buildCriteriaFrom({...req.params, ...req.query})
-)));
-router.patch('/:communityID/:userID/changeRole', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').changeRole(req.body.communityRole,
-    buildCriteriaFrom({...req.params, ...req.query})
+router.get('/:communityID/members', async (req, res) => {
+    const communityMembers = (await serviceFactory.get('communities').members(
+        buildCriteriaFrom({...req.params, ...req.query, communityRole: 'member'})
+    )).data.map(u => u['userID']);
+    return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${communityMembers.join(',')}`})));
+});
+router.get('/:communityID/moderators', async (req, res) => {
+    const communityMembers = (await serviceFactory.get('communities').members(
+        buildCriteriaFrom({...req.params, ...req.query, communityRole: 'moderator'})
+    )).data.map(u => u['userID']);
+    return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${communityMembers.join(',')}`})));
+});
+router.patch('/:communityID/:userID/changeRole', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').changeRole(
+    buildCriteriaFrom({...req.params, ...req.query}),
+    req.body
 )));
 router.delete('/:communityID/:userID/leave', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').leave(buildCriteriaFrom({...req.params, ...req.query}))));
 router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))));

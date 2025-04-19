@@ -36,7 +36,7 @@ export class SupabaseRepository extends Repository {
                 criteria
             )
         );
-        result.data = result.data.filter(e => e[join]);
+        if (result.success) result.data = result.data.filter(e => e[join]);
         return result;
     }
 
@@ -64,7 +64,6 @@ export class SupabaseRepository extends Repository {
         const {data, error} = await query;
 
         if (error) {
-            console.error('Error en Supabase:', error.message);
             return {success: false, error: error.message};
         }
 

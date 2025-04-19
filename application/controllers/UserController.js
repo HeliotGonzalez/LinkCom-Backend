@@ -19,6 +19,6 @@ router.get('/:userID/communities', async (req, res) => {
     return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(
         response
     ));
-})
+});
 
 export default router;

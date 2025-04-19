@@ -6,6 +6,10 @@ export class Repository {
         throw new Error('Method not implemented');
     }
 
+    getWithJoin() {
+        throw new Error('Method not implemented');
+    }
+
     create() {
         throw new Error('Method not implemented');
     }

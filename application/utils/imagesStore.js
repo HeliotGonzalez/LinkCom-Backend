@@ -15,6 +15,8 @@ export const saveImage = async (imageBase64, imageDirectory) => {
     const filePath = path.join(directory, fileName);
 
     fs.writeFileSync(filePath, buffer);
+
+    return filePath;
 };
 
 export const getImage = async (imagePath) => {
@@ -28,7 +30,7 @@ export const getImage = async (imagePath) => {
 export const fillingCommunityImage = async (response) => {
     if (response.success) for (let i = 0; i < response.data.length; i++){
         response.data[i].imagePath = await getImage(
-            `images/communities/${response.data[i].id}/communityImage.png`
+            `../../images/communities/${response.data[i].id}/communityImage.png`
         );
     }
     return response;
@@ -37,7 +39,7 @@ export const fillingCommunityImage = async (response) => {
 export const fillingEventImage = async (response) => {
     if (response.success) for (let i = 0; i < response.data.length; i++){
         response.data[i].imagePath = await getImage(
-            `images/communities/${response.data[i].communityID}/${response.data[i].id}/eventImage.png`
+            `../../images/communities/${response.data[i].communityID}/${response.data[i].id}/eventImage.png`
         );
     }
     return response;

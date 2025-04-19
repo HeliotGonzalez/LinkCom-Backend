@@ -10,7 +10,7 @@ export class CommunityService extends Service {
 
     async create(parameters, interests) {
         const creationResponse = await this.factory.get('Communities').create(parameters);
-        if (creationResponse.success) await this.join(creationResponse.data.id, parameters.userID);
+        if (creationResponse.success) await this.join(creationResponse.data[0].id, parameters.creatorID);
         if (creationResponse.success && interests) await this.factory.get('CommunityInterest').create(parameters);
         return creationResponse;
     }
@@ -35,8 +35,8 @@ export class CommunityService extends Service {
         return await this.factory.get('CommunityUser').remove(criteria);
     }
 
-    async changeRole(communityRole, criteria = []) {
-        return await this.factory.get('CommunityUser').update(communityRole, criteria);
+    async changeRole(criteria = [], parameters) {
+        return await this.factory.get('CommunityUser').update(criteria, parameters);
     }
 
     async members(criteria = []) {

@@ -29,7 +29,7 @@ router.put('/', async (req, res) => {
 router.delete('/:id', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, serviceFactory.get('events').remove(buildCriteriaFrom({...req.params, ...req.query}))));
 router.put('/:eventID/join', async (req, res) => {
     const communityID = (await serviceFactory.get('events').get(buildCriteriaFrom({id: req.params.eventID}))).data[0].communityID;
-    handleError(HTTPMethodsMap, res, await serviceFactory.get('events').join(communityID, req.params.eventID, req.body.userID));
+    handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('events').join(communityID, req.params.eventID, req.body.userID));
 });
 router.delete('/:eventID/:userID/leave', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('events').leave(buildCriteriaFrom({...req.params, ...req.query}))));
 
