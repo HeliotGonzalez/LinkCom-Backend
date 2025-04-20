@@ -1,6 +1,6 @@
 import {ServiceFactory} from "../../architecture/io/services/ServiceFactory.js";
 import {CommunityService} from "../../architecture/io/services/communityService.js";
-import repositoryFactory from "./RepositoryFactory.js";
+import repositoryFactory from "./RepositoriesUtils.js";
 import {UserService} from "../../architecture/io/services/UserService.js";
 import {EventService} from "../../architecture/io/services/EventService.js";
 

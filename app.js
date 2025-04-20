@@ -9,6 +9,7 @@ import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
 import eventRouter from './application/controllers/EventController.js';
 import {Server} from "socket.io";
+import {initializeSockets} from "./architecture/io/sockets/DomainSocketInitializer.js";
 
 const app = express();
 
@@ -29,7 +30,11 @@ const io = new Server(server, {
 });
 
 server.listen(3001, () => console.log('Servidor para sockets inicializado!'));
-io.on('connection', (socket) => console.log('Frontend conectado por socket:', socket.id));
+
+io.on('connection', (socket) => {
+    console.log('Frontend conectado por socket:', socket.id);
+    initializeSockets(socket, io);
+});
 
 const executeQuery = async (query) => {
     const {data, error} = await query;

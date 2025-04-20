@@ -1,19 +1,5 @@
 import {SupabaseRepository} from "../io/supabaseRepository.js";
-
-export class RepositoryFactory {
-    constructor() {
-        this.repositories = {};
-    }
-
-    put(key, repository) {
-        this.repositories[key] = repository;
-        return this;
-    }
-
-    get(key) {
-        return this.repositories[key];
-    }
-}
+import {RepositoryFactory} from "../../architecture/io/repositories/RepositoryFactory.js";
 
 const repositoryFactory = new RepositoryFactory();
 repositoryFactory
