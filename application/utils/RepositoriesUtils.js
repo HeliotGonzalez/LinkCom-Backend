@@ -1,4 +1,4 @@
-import {SupabaseRepository} from "../io/supabaseRepository.js";
+import {SupabaseRepository} from "../io/repositories/supabaseRepository.js";
 import {RepositoryFactory} from "../../architecture/io/repositories/RepositoryFactory.js";
 
 const repositoryFactory = new RepositoryFactory();

@@ -7,12 +7,5 @@ export class DomainSocket {
         this.io = io;
     }
 
-    onInsert() {
-    }
-
-    onUpdate() {
-    }
-
-    onDelete() {
-    }
+    initialize() {}
 }

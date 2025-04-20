@@ -9,7 +9,7 @@ import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
 import eventRouter from './application/controllers/EventController.js';
 import {Server} from "socket.io";
-import {initializeSockets} from "./architecture/io/sockets/DomainSocketInitializer.js";
+import {initializeSockets} from "./application/utils/DomainSocketsInitializer.js";
 
 const app = express();
 
@@ -33,7 +33,7 @@ server.listen(3001, () => console.log('Servidor para sockets inicializado!'));
 
 io.on('connection', (socket) => {
     console.log('Frontend conectado por socket:', socket.id);
-    initializeSockets(socket, io);
+    initializeSockets(supabase, io);
 });
 
 const executeQuery = async (query) => {
@@ -679,18 +679,3 @@ app.get('/userCommunities', async (req, res) => {
 
     return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
 });
-
-supabase
-    .channel('custom-all-channel')
-    .on(
-        'postgres_changes',
-        {
-            event: '*',
-            schema: 'public',
-            table: 'Communities'
-        },
-        (payload) => {
-            io.emit('communities:change', payload);
-        }
-    )
-    .subscribe()

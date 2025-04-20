@@ -1,5 +1,5 @@
-import supabase from "../../config/supabaseClient.js";
-import {Repository} from "../../architecture/io/repositories/Repository.js";
+import supabase from "../../../config/supabaseClient.js";
+import {Repository} from "../../../architecture/io/repositories/Repository.js";
 
 /**
  * @implements {Repository}
