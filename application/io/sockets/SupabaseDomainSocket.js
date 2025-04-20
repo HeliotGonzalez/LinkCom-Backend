@@ -13,7 +13,7 @@ export class SupabaseDomainSocket extends DomainSocket {
 
     initialize() {
         this.socket
-            .channel('custom-all-channel')
+            .channel(`realtime:${this.table}`)
             .on(
                 'postgres_changes',
                 {
@@ -21,7 +21,7 @@ export class SupabaseDomainSocket extends DomainSocket {
                     schema: 'public',
                     table: this.table
                 },
-                (payload) => this.io.emit(`${this.table.toLowerCase()}:${payload.type}`, payload)
+                (payload) => this.io.emit(`${this.table.toLowerCase()}:${payload.eventType}`, payload)
             )
             .subscribe()
     }

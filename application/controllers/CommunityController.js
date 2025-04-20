@@ -58,5 +58,7 @@ router.delete('/:communityID/:userID/leave', async (req, res) => handleError(HTT
 router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))));
 router.get('/:communityID/events', async (req, res) => handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('communities').events(buildCriteriaFrom({...req.params, ...req.query})))));
 router.put('/:communityID/joinRequest', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').makeRequest({communityID : req.params.communityID, ...req.body})))
+router.get('/:communityID/joinRequests', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').joinRequests(buildCriteriaFrom({...req.params, ...req.query}))));
+router.patch('/:joinRequestID/update', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').updateJoinRequest(buildCriteriaFrom({id: req.params.joinRequestID, ...req.query}), req.body)));
 
 export default router;

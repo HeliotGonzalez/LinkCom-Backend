@@ -33,8 +33,9 @@ server.listen(3001, () => console.log('Servidor para sockets inicializado!'));
 
 io.on('connection', (socket) => {
     console.log('Frontend conectado por socket:', socket.id);
-    initializeSockets(supabase, io);
 });
+
+initializeSockets(supabase, io);
 
 const executeQuery = async (query) => {
     const {data, error} = await query;

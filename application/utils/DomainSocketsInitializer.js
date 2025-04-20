@@ -8,4 +8,5 @@ export const initializeSockets = (socket, io) => {
         .put('JoinRequests', new SupabaseDomainSocket(socket, io, 'JoinRequests'))
         .put('Announcements', new SupabaseDomainSocket(socket, io, 'Announcements'))
         .put('Events', new SupabaseDomainSocket(socket, io, 'Events'))
+        .put('Users', new SupabaseDomainSocket(socket, io, 'Users'))
 }

@@ -54,4 +54,12 @@ export class CommunityService extends Service {
     async makeRequest(parameters) {
         return this.factory.get('JoinRequests').create(parameters);
     }
+
+    async joinRequests(criteria = []) {
+        return this.factory.get('JoinRequests').get(criteria);
+    }
+
+    async updateJoinRequest(criteria = [], parameters) {
+        return await this.factory.get('JoinRequests').update(criteria, parameters);
+    }
 }
