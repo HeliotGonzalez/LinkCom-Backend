@@ -1,5 +1,6 @@
 // app.js
 import express from 'express';
+import * as http from "node:http";
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
@@ -7,6 +8,7 @@ import {getImage, saveImage} from "./application/utils/imagesStore.js";
 import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
 import eventRouter from './application/controllers/EventController.js';
+import {Server} from "socket.io";
 
 const app = express();
 
@@ -19,6 +21,15 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*'
+    }
+});
+
+server.listen(3001, () => console.log('Servidor para sockets inicializado!'));
+io.on('connection', (socket) => console.log('Frontend conectado por socket:', socket.id));
 
 const executeQuery = async (query) => {
     const {data, error} = await query;
@@ -584,7 +595,7 @@ app.get('/updateusers', async (req, res) => {
 });
 
 app.get('/community', async (req, res) => {
-    const { communityID } = req.query;
+    const {communityID} = req.query;
 
     if (!communityID) {
         return res.status(400).json({error: 'communityID es requerido'});
@@ -599,7 +610,7 @@ app.get('/community', async (req, res) => {
 });
 
 app.post('/leaveCommunity', async (req, res) => {
-    const { userID, communityID } = req.body;
+    const {userID, communityID} = req.body;
 
     const leaveCommunityResponse = await executeQuery(
         supabase.from('CommunityUser')
@@ -621,11 +632,14 @@ app.post('/leaveCommunity', async (req, res) => {
     );
     if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
 
-    return res.status(201).json({message: 'Community left properly', data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}});
+    return res.status(201).json({
+        message: 'Community left properly',
+        data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}
+    });
 });
 
 app.post('/leaveEvent', async (req, res) => {
-    const { userID, eventID } = req.body;
+    const {userID, eventID} = req.body;
 
     const leaveEventResponse = await executeQuery(
         supabase.from('EventUser')
@@ -640,7 +654,7 @@ app.post('/leaveEvent', async (req, res) => {
 });
 
 app.get('/userCommunities', async (req, res) => {
-    const { userID } = req.query;
+    const {userID} = req.query;
 
     const userCommunitiesIDsResponse = await executeQuery(
         supabase.from('CommunityUser')
@@ -660,3 +674,18 @@ app.get('/userCommunities', async (req, res) => {
 
     return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
 });
+
+supabase
+    .channel('custom-all-channel')
+    .on(
+        'postgres_changes',
+        {
+            event: '*',
+            schema: 'public',
+            table: 'Communities'
+        },
+        (payload) => {
+            io.emit('communities:change', payload);
+        }
+    )
+    .subscribe()

@@ -27,6 +27,13 @@ export const getImage = async (imagePath) => {
     return `data:image/png;base64,${imageBuffer.toString('base64')}`;
 };
 
+export const removeImage = async (imagePath) => {
+    const route = path.join(__dirname, imagePath);
+    if (fs.existsSync(route)) await fs.rm(route, { recursive: true, force: true }, (err) => {
+        return !err;
+    });
+}
+
 export const fillingCommunityImage = async (response) => {
     if (response.success) for (let i = 0; i < response.data.length; i++){
         response.data[i].imagePath = await getImage(
