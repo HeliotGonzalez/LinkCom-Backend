@@ -12,11 +12,12 @@ export const saveImage = async (imageBase64, imageDirectory) => {
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
     const fileName = 'communityImage.png';
+
     const filePath = path.join(directory, fileName);
 
     fs.writeFileSync(filePath, buffer);
 
-    return filePath;
+    return imageDirectory;
 };
 
 export const getImage = async (imagePath) => {
@@ -37,7 +38,7 @@ export const removeImage = async (imagePath) => {
 export const fillingCommunityImage = async (response) => {
     if (response.success) for (let i = 0; i < response.data.length; i++){
         response.data[i].imagePath = await getImage(
-            `../../images/communities/${response.data[i].id}/communityImage.png`
+            `${response.data[i].imagePath}/communityImage.png`
         );
     }
     return response;
@@ -46,7 +47,7 @@ export const fillingCommunityImage = async (response) => {
 export const fillingEventImage = async (response) => {
     if (response.success) for (let i = 0; i < response.data.length; i++){
         response.data[i].imagePath = await getImage(
-            `../../images/communities/${response.data[i].communityID}/${response.data[i].id}/eventImage.png`
+            `${response.data[i].imagePath}/${response.data[i].id}/eventImage.png`
         );
     }
     return response;

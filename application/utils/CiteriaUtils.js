@@ -5,7 +5,7 @@ import {CriteriaBuilderFactory} from "../../architecture/io/criteria/CriteriaBui
 
 export const handleError = (method, res, serviceResponse) => {
     return res.status(HTTPCodesMap[method][serviceResponse.success ? 'SUCCESS' : 'ERROR']).json({
-        message: serviceResponse.message,
+        message: serviceResponse.success ? serviceResponse.message : serviceResponse.error,
         data: serviceResponse.data
     });
 }

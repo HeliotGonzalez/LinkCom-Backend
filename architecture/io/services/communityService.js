@@ -44,22 +44,26 @@ export class CommunityService extends Service {
     }
 
     async announcements(criteria) {
-        return this.factory.get('Announcements').get(criteria);
+        return await this.factory.get('Announcements').get(criteria);
     }
 
     async events(criteria) {
-        return this.factory.get('Events').get(criteria);
+        return await this.factory.get('Events').get(criteria);
     }
 
     async makeRequest(parameters) {
-        return this.factory.get('JoinRequests').create(parameters);
+        return await this.factory.get('JoinRequests').create(parameters);
     }
 
     async joinRequests(criteria = []) {
-        return this.factory.get('JoinRequests').get(criteria);
+        return await this.factory.get('JoinRequests').get(criteria);
     }
 
     async updateJoinRequest(criteria = [], parameters) {
         return await this.factory.get('JoinRequests').update(criteria, parameters);
+    }
+
+    async cancelRequest(criteria = []) {
+        return await this.factory.get('JoinRequests').remove(criteria);
     }
 }
