@@ -24,7 +24,7 @@ export class SupabaseRepository extends Repository {
                 supabase.from(this.table)
                     .select('*'),
                 criteria
-            )
+            ).select('*')
         );
     }
 
