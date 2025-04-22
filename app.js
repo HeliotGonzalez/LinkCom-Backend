@@ -462,32 +462,6 @@ app.get('/getCalendarEvents', async (req, res) => {
     }
 });
 
-// POST /
-app.post('/joinEvent', async (req, res) => {
-    const {userID, eventID, communityID} = req.body;
-
-    if (!userID || !eventID || !communityID) {
-        return res.status(400).json({error: 'userID, eventID y communityID son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
-
-    try {
-        const {data, error} = await supabase.from('EventUser').insert([{userID, eventID, communityID, created_at}]);
-
-        if (error) {
-            console.error('Error al crear EventUser:', error);
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'EventUser creado correctamente', data});
-    } catch (err) {
-        console.error('Error inesperado:', err);
-        return res.status(500).json({error: 'Error inesperado'});
-    }
-});
-
 app.get("/users", async (req, res) => {
     const {communityID} = req.query;
 
