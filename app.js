@@ -427,43 +427,6 @@ app.get('/communitiesEventsExcludingUser', async (req, res) => {
     });
 });
 
-// GET /nonBelongingCommunities -> Devuelve la lista de comunidades desde la tabla "Communities"
-app.get('/nonBelongingCommunities', async (req, res) => {
-    const {userId} = req.query;
-
-    if (!userId) {
-        return res.status(400).json({error: 'El parámetro userId es requerido'});
-    }
-
-    try {
-        const {data: user, error: userError} = await supabase.from('Users').select('*').eq('id', userId).single();
-
-        // Consulta 1: Obtener comunidades públicas
-        const {data, error} = await supabase.from('Communities').select('id, userID, name, description, created_at')
-            .eq('isPrivate', false)
-            .limit(3);
-
-        // Consulta 2: Obtener las comunidades en las que el usuario ya está
-        const {data: memberships, error: membershipsError} = await supabase
-            .from('CommunityUser')
-            .select('communityID')
-            .eq('userID', user.id);
-
-        // Extraer los IDs de las comunidades a las que pertenece el usuario
-        const membershipIDs = memberships.map(item => item.communityID);
-
-        // Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
-        const filteredCommunities = data.filter(community => !membershipIDs.includes(community.id));
-
-
-        if (error) return res.status(500).json({error: error.message});
-        return res.json(filteredCommunities);
-
-    } catch (error) {
-        res.status(500).json({error: error.message});
-    }
-});
-
 // GET /events -> Devuelve los eventos a los que el usuario pertenece
 app.get('/getCalendarEvents', async (req, res) => {
     const {userID} = req.query;
@@ -521,36 +484,6 @@ app.post('/joinEvent', async (req, res) => {
         return res.status(201).json({message: 'EventUser creado correctamente', data});
     } catch (err) {
         console.error('Error inesperado:', err);
-        return res.status(500).json({error: 'Error inesperado'});
-    }
-});
-
-app.post('/joinCommunity', async (req, res) => {
-    const {userID, communityID} = req.body;
-
-    if (!userID || !communityID) {
-        return res.status(400).json({error: 'userID y communityID son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
-    const communityRole = 'member';
-
-    try {
-        const {data, error} = await supabase.from('CommunityUser').insert([{
-            userID,
-            communityID,
-            created_at,
-            communityRole
-        }]);
-
-        if (error) {
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
-
-    } catch (err) {
         return res.status(500).json({error: 'Error inesperado'});
     }
 });
