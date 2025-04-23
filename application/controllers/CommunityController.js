@@ -71,7 +71,6 @@ router.patch('/:communityID/:userID/changeRole', async (req, res) => handleError
 )));
 
 router.delete('/:communityID/:userID/leave', async (req, res) => {
-    console.log("LEAVE");
     handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').leave(buildCriteriaFrom({...req.params, ...req.query})))
 });
 
