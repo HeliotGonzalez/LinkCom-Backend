@@ -6,8 +6,13 @@ import {fillingEventImage, saveImage} from "../utils/imagesStore.js";
 
 const router = Router();
 
-router.get('/', async (req, res) => handleError(HTTPMethodsMap.GET, res, await  fillingEventImage(await serviceFactory.get('events').get())));
-router.get('/:id?', async (req, res) => handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('events').get(buildCriteriaFrom({...req.params, ...req.query})))));
+router.get('/:id?', async (req, res) => {
+    console.log(buildCriteriaFrom(req.query))
+    handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('events').get(buildCriteriaFrom({...req.params, ...req.query}))))
+});
+router.get('/:userID', async (req, res) => {
+    const userEventsIDs = serviceFactory.get('Events')
+})
 router.get('/excluding/:userID', async (req, res) => {
     const userEvents = (await serviceFactory.get('events').userEvents(buildCriteriaFrom({userID: req.params.userID}))).map(e => e.eventID);
     return handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('events').get(

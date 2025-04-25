@@ -9,7 +9,7 @@ export class EventService extends Service {
         super(factory);
     }
 
-    async get(criteria) {
+    async get(criteria = []) {
         return await this.factory.get('Events').get(criteria);
     }
 
