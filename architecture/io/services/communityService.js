@@ -48,6 +48,10 @@ export class CommunityService extends Service {
         return await this.factory.get('Announcements').get(criteria);
     }
 
+    async createAnnouncement(parammeters) {
+        return await this.factory.get('Announcements').create(parammeters);
+    }
+
     async events(criteria) {
         return await this.factory.get('Events').get(criteria);
     }
