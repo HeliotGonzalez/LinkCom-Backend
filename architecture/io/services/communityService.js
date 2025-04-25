@@ -23,7 +23,7 @@ export class CommunityService extends Service {
     async update(criteria = [], parameters) {
         return await this.factory.get('Communities').update(criteria, parameters);
     }
-
+    
     async remove(criteria = []) {
         return await this.factory.get('Communities').remove(criteria);
     }
@@ -94,6 +94,7 @@ export class CommunityService extends Service {
 
 
     /* ---------- PATCH con imagen ---------- */
+    /*
     async update(criteria = [], parameters) {
         // 1. Si llega una nueva imagen en Base64 la persistimos
         if (parameters.imageBase64) {
@@ -103,7 +104,6 @@ export class CommunityService extends Service {
             (criteria.find(c => c.key === "id")?.value ?? null);
 
         if (!communityID) {
-            /* Último recurso: consultamos para extraer el id */
             const current = await this.factory.get("Communities").get(criteria);
             if (current.success && current.data.length) {
             communityID = current.data[0].id;
@@ -121,4 +121,5 @@ export class CommunityService extends Service {
         // 2. Actualizamos la fila
         return await this.factory.get("Communities").update(criteria, parameters);
     }
+        */
 }
