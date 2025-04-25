@@ -12,7 +12,7 @@ export const HTTPCodesMap = {
     },
     'PUT': {
         SUCCESS: 201,
-        ERROR: 200
+        ERROR: 400
     },
     'DELETE': {
         SUCCESS: 204,
@@ -20,6 +20,6 @@ export const HTTPCodesMap = {
     },
     'PATCH': {
         SUCCESS: 200,
-        ERROR: 204
+        ERROR: 400
     }
 }

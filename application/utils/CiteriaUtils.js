@@ -42,3 +42,11 @@ builderFactory
         'in',
         (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.in).withKey(key).withValue(value)
     )
+    .put(
+        'limit',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.limit).withKey(key).withValue(value)
+    )
+    .put(
+        'order',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.order).withKey(key).withValue(value)
+    )
