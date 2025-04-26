@@ -9,11 +9,15 @@ export class UserService extends Service {
         super(factory);
     }
 
-    async get(criteria)  {
+    async get(criteria = [])  {
         return await this.factory.get('Users').get(criteria);
     }
 
-    async communities(criteria) {
+    async communities(criteria = []) {
         return await this.factory.get('CommunityUser').getWithJoin('Communities', criteria);
+    }
+
+    async events(criteria = []) {
+        return await this.factory.get('EventUser').getWithJoin('Events', criteria);
     }
 }

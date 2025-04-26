@@ -208,20 +208,6 @@ app.get('/communityEvents', async (req, res) => {
     res.status(201).json({message: 'Community events found!', data: communityEventsResponse.data});
 });
 
-app.get('/events', async (req, res) => {
-    const eventsResponse = await executeQuery(supabase.from('Events').select('*'));
-    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse["error"]});
-
-    res.status(201).json({message: 'User events found!', data: eventsResponse.data});
-});
-
-app.get('/interests', async (req, res) => {
-    const interestsResponse = await executeQuery(supabase.from('Interests').select('*'));
-    if (!interestsResponse.success) return res.status(500).json({error: interestsResponse["error"]});
-
-    res.status(201).json({message: 'Interests found!', data: interestsResponse.data});
-});
-
 app.get('/test', async (req, res) => {
     const {data, error} = await supabase.from('test').select('*');
 
