@@ -66,4 +66,10 @@ export class CommunityService extends Service {
     async cancelRequest(criteria = []) {
         return await this.factory.get('JoinRequests').remove(criteria);
     }
+
+    async isJoined(criteria = []) {
+        const response = this.get(criteria);
+        response.data[0] = response.data.length > 0;
+        return response;
+    }
 }
