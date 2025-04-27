@@ -38,5 +38,7 @@ router.get('/joined/:userID', async (req, res) => {
     if (response.success) response.data = response.data.map(e => e['Events']);
     handleError(HTTPMethodsMap.GET, res, response)
 });
+router.post('/:eventID/createComment', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('events').createComment({...req.params, ...req.body})));
+router.get('/:eventID/getComments'), async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('events').getComments(buildCriteriaFrom({...req.params, ...req.query})));
 
 export default router;
