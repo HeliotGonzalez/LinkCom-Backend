@@ -48,6 +48,10 @@ export class CommunityService extends Service {
         return await this.factory.get('Announcements').get(criteria);
     }
 
+    async createAnnouncement(parammeters) {
+        return await this.factory.get('Announcements').create(parammeters);
+    }
+
     async events(criteria) {
         return await this.factory.get('Events').get(criteria);
     }
@@ -68,26 +72,32 @@ export class CommunityService extends Service {
         return await this.factory.get('JoinRequests').remove(criteria);
     }
 
+    async isJoined(criteria = []) {
+        const response = this.get(criteria);
+        response.data[0] = response.data.length > 0;
+        return response;
+    }
+
     async getNonBelongingCommunities(userID, extraCriteria = []) {
         if (!userID) return { success: false, error: 'userID requerido' };
-      
+
         /* 1. Comunidades a las que SÍ pertenece el usuario */
         const memberships = await this.factory.get('CommunityUser').get([
           builderFactory.get('eq')('userID', userID).build()
         ]);
         if (!memberships.success) return memberships;
-      
+
         const joinedIDs = memberships.data.map(m => m.communityID);
-      
+
         /* 2. Criterios finales */
         const criteria = [
           ...extraCriteria,
-          builderFactory.get('eq')('isPrivate', false).build() 
+          builderFactory.get('eq')('isPrivate', false).build()
         ];
         if (joinedIDs.length) {
           criteria.push(builderFactory.get('nin')('id', joinedIDs).build());
         }
-      
+
         /* 3. Consulta de comunidades */
         return this.factory.get('Communities').get(criteria);
     }

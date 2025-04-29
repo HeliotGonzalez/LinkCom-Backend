@@ -504,27 +504,151 @@ app.get('/community', async (req, res) => {
 });
 
 app.post('/leaveCommunity', async (req, res) => {
-  const { userID, communityID } = req.body;
+    const {userID, communityID} = req.body;
 
-  if (!userID || !communityID) {
-    return res.status(400).json({ error: 'userID y communityID son requeridos' });
-  }
+    const leaveCommunityResponse = await executeQuery(
+        supabase.from('CommunityUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveCommunityResponse.success) return res.status(500).json({error: leaveCommunityResponse["error"]});
 
-  try {
-    const { error } = await supabase
-      .from('CommunityUser')
-      .delete()
-      .eq('userID', userID)
-      .eq('communityID', communityID);
+    console.log(leaveCommunityResponse.data)
 
-    if (error) {
-      console.error('Error al abandonar comunidad:', error);
-      return res.status(500).json({ error: error.message });
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
+    return res.status(201).json({
+        message: 'Community left properly',
+        data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}
+    });
+});
+
+app.post('/leaveEvent', async (req, res) => {
+    const {userID, eventID} = req.body;
+
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('eventID', eventID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
+    return res.status(201).json({message: 'Event left properly', data: leaveEventResponse.data});
+});
+
+app.get('/userCommunities', async (req, res) => {
+    const {userID} = req.query;
+
+    const userCommunitiesIDsResponse = await executeQuery(
+        supabase.from('CommunityUser')
+            .select('communityID')
+            .eq('userID', userID)
+    );
+    if (!userCommunitiesIDsResponse.success) return res.status(500).json({error: userCommunitiesIDsResponse["error"]});
+
+    userCommunitiesIDsResponse.data = userCommunitiesIDsResponse.data.map(c => c['communityID']);
+
+    const userCommunitiesResponse = await executeQuery(
+        supabase.from('Communities')
+            .select('id')
+            .in('id', userCommunitiesIDsResponse.data)
+    );
+    if (!userCommunitiesResponse.success) return res.status(500).json({error: userCommunitiesResponse["error"]});
+
+    return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
+});
+
+app.post('/createAnnouncement', async (req, res) => {
+  const {title, body, communityID, publisherID} = req.body;
+
+    try {
+        console.log('communityID:', communityID);
+        const {data, error} = await supabase.from('Announcements').insert([{
+          title, 
+          body, 
+          communityID,  
+          publisherID
+        }]).select('*');
+        console.log(data);
+        console.log("1", error);
+        if (error) {
+            return res.status(500).json({error: error.message});
+        }
+
+        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
+
+    } catch (err) {
+        console.log("2", err);
+        return res.status(500).json({error: 'Error inesperado'});
+    }
+});
+
+app.get('/announcements', async (req, res) => {
+    const {communityID} = req.query;
+
+    if (!communityID) {
+        return res.status(400).json({error: 'El parámetro communityID es requerido'});
     }
 
-    return res.status(200).json({ message: 'Has abandonado la comunidad correctamente' });
-  } catch (err) {
-    console.error('Error inesperado en /leaveCommunity:', err);
-    return res.status(500).json({ error: 'Error inesperado al abandonar la comunidad' });
-  }
+    try {
+        const {data, error} = await supabase.from('Announcemments').select('*').eq('communityID', communityID).order('created_at', { ascending: true });
+        if (error) {
+            console.log(error);
+            return res.status(500).json({error: error.message});
+        }
+        console.log(res);
+        return res.json({data});
+
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+
 });
+
+async function registerUser(data) {
+    const {email, password, username, description} = data;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    try {
+        // Register the user with Supabase Auth
+        const {data, error} = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            console.error('Error during user registration:', error);
+        }
+
+        // Insert additional user data into the Users table
+        const {data: userData, error: userError} = await supabase.from('Users').insert([
+            {
+                id: data.user.id, // Use the ID from Supabase Auth
+                username: username,
+                email: email,
+                description: description,
+            },
+        ]);
+
+        if (userError) {
+            console.error('Error inserting user into Users table:', userError);
+        }
+
+        res.status(201).json({message: 'User registered successfully', user: userData});
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
