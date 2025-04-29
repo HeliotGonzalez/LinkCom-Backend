@@ -6,11 +6,16 @@ import {fillingCommunityImage} from "../utils/imagesStore.js";
 
 const router = Router();
 
+router.get('/profile/:id?', async (req, res) => {
+    const criteria = buildCriteriaFrom({ ...req.params, ...req.query });
+    const result   = await serviceFactory.get('users').profile(criteria);
+    return handleError(HTTPMethodsMap.GET, res, result);
+  });
+
 router.get('/:id?', async (req, res) => {
-    return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(
-        buildCriteriaFrom({...req.params, ...req.query})
-    ))
+    return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(buildCriteriaFrom({...req.params, ...req.query})))
 });
+
 router.get('/:userID/communities', async (req, res) => {
     const response = await serviceFactory.get('users').communities(
         buildCriteriaFrom({...req.params, ...req.query})
