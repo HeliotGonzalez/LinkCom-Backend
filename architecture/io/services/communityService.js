@@ -131,4 +131,9 @@ export class CommunityService extends Service {
         // 2. Actualizamos la fila
         return await this.factory.get("Communities").update(criteria, parameters);
     }
+
+    async deleteAnnouncement(criteria = []) {
+        return await this.factory.get("Announcements").remove(criteria);
+    }
+
 }
