@@ -17,11 +17,11 @@ router.put('/', async (req, res) => {
     return handleError(HTTPMethodsMap.PUT, res, creationResponse);
 });
 
-router.get('/nonBelongingCommunities', async (req, res) => {
-    const { userId } = req.query;
-    const response = await serviceFactory.get('communities').getNonBelongingCommunities(userId);
-  
-    return handleError(HTTPMethodsMap.GET, res, response);
+
+router.get('/nonBelongingCommunities/:userID', async (req, res) => {
+      const { userID } = req.params;
+      const result = await serviceFactory.get('communities').getNonBelongingCommunities(userID);
+      return handleError(HTTPMethodsMap.GET, res, result);
 });
 
 router.get('/:id?', async (req, res) => {

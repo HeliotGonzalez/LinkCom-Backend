@@ -69,27 +69,31 @@ export class CommunityService extends Service {
     }
 
     async getNonBelongingCommunities(userID, extraCriteria = []) {
-        if (!userID) return { success: false, error: 'userID requerido' };
-      
-        /* 1. Comunidades a las que SÍ pertenece el usuario */
-        const memberships = await this.factory.get('CommunityUser').get([
+        console.log('[CommunityService] getNonBelongingCommunities → userID:', userID);
+    
+        if (!userID) {
+          return { success: false, error: 'userID requerido' };
+        }
+    
+        const membershipsRes = await this.factory.get('CommunityUser').get([
           builderFactory.get('eq')('userID', userID).build()
         ]);
-        if (!memberships.success) return memberships;
-      
-        const joinedIDs = memberships.data.map(m => m.communityID);
-      
-        /* 2. Criterios finales */
+        if (!membershipsRes.success) return membershipsRes;
+    
+        const joinedIDs = (membershipsRes.data ?? []).map(m => m.communityID);
+        console.log('[CommunityService] joinedIDs:', joinedIDs);
+    
         const criteria = [
           ...extraCriteria,
-          builderFactory.get('eq')('isPrivate', false).build() 
+          builderFactory.get('eq')('isPrivate', false).build()
         ];
-        if (joinedIDs.length) {
-          criteria.push(builderFactory.get('nin')('id', joinedIDs).build());
-        }
-      
-        /* 3. Consulta de comunidades */
-        return this.factory.get('Communities').get(criteria);
+        const commRes = await this.factory.get('Communities').get(criteria);
+        if (!commRes.success) return commRes;
+    
+        const nonBelonging = commRes.data.filter(c => !joinedIDs.includes(c.id));
+        console.log('[CommunityService] non-belonging result:', nonBelonging.length);
+    
+        return { success: true, data: nonBelonging };
     }
 
 

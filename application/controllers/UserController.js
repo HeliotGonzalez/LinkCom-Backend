@@ -10,7 +10,7 @@ router.get('/profile/:id?', async (req, res) => {
     const criteria = buildCriteriaFrom({ ...req.params, ...req.query });
     const result   = await serviceFactory.get('users').profile(criteria);
     return handleError(HTTPMethodsMap.GET, res, result);
-  });
+});
 
 router.get('/:id?', async (req, res) => {
     return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(buildCriteriaFrom({...req.params, ...req.query})))
