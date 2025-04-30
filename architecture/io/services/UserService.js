@@ -17,6 +17,10 @@ export class UserService extends Service {
         return await this.factory.get('CommunityUser').getWithJoin('Communities', criteria);
     }
 
+    async update(criteria = [], parameters) {
+      return await this.factory.get('Users').update(criteria, parameters);
+    }
+
     async profile(criteria) {
         console.log('   ⇨ UserService.profile, criteria:', criteria);
 
@@ -63,6 +67,6 @@ export class UserService extends Service {
         console.log('   ✓ profileData assembled:', profileData);
       
         return {success: true, data: profileData};
-      }
+    }
           
 }
