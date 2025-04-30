@@ -52,11 +52,19 @@ router.delete('/:id', async (req, res) => {
 router.put('/:communityID/join', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').join(req.params.communityID, req.body.userID, 'member')));
 
 router.get('/:communityID/members', async (req, res) => {
-    const communityMembers = (await serviceFactory.get('communities').members(
-        buildCriteriaFrom({...req.params, ...req.query, communityRole: 'member'})
-    )).data.map(u => u['userID']);
+    const membersRes = await serviceFactory.get('communities').members(buildCriteriaFrom({...req.params, ...req.query, communityRole: 'member'}));
+    const userIDs = Array.isArray(membersRes.data) ? membersRes.data.map(u => u.userID) : [];
+    const usersRes = await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${userIDs.join(',')}`}));
+    return handleError(HTTPMethodsMap.GET, res, usersRes);
+});
+
+/*
+router.get('/:communityID/members', async (req, res) => {
+    const communityMembers = (await serviceFactory.get('communities').members(buildCriteriaFrom({...req.params, ...req.query, communityRole: 'member'})
+        )).data.map(u => u['userID']);
     return handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${communityMembers.join(',')}`})));
 });
+*/
 
 router.get('/:communityID/moderators', async (req, res) => {
     const communityMembers = (await serviceFactory.get('communities').members(
