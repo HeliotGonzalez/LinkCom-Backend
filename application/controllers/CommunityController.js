@@ -36,17 +36,27 @@ router.get('/excluding/:userID', async (req, res) => {
         [...buildCriteriaFrom(req.query), builderFactory.get('nin')('id', userCommunities).build()]
     )));
 });
+router.patch('/:id', async (req, res) => {
+    const communityId = req.params.id;
+    const { name, description, isPrivate, imageBase64 } = req.body;
+    console.log('Aquí', communityId, req.body);
+  
 
-router.patch('/:id', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').update(
-    buildCriteriaFrom({...req.params, ...req.query}), req.body
-)));
+    const params = { name, description, isPrivate };
+    if (imageBase64) {
+      params.imagePath = imageBase64;
+    }
+  
+    const updateResponse = await serviceFactory.get('communities').updateWithImage(communityId, params);
+  
+    return handleError(HTTPMethodsMap.PATCH, res, updateResponse);
+});
 
 router.delete('/:id', async (req, res) => {
-    console.log("DELE")
     handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').remove(
         buildCriteriaFrom({...req.params, ...req.query})
     ));
-    await removeImage(`../../images/communities/${req.params.id}/communityImage.png`);
+    await removeImage(`../../images/communities/${req.params.id}`);
 });
 
 router.put('/:communityID/join', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').join(req.params.communityID, req.body.userID, 'member')));
@@ -83,10 +93,13 @@ router.delete('/:communityID/:userID/leave', async (req, res) => {
 });
 
 router.get('/:communityID/announcements', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').announcements(buildCriteriaFrom({...req.params, ...req.query}))));
+router.post('/:communityID/createAnnouncement', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').createAnnouncement(req.body)));
 router.get('/:communityID/events', async (req, res) => handleError(HTTPMethodsMap.GET, res, await fillingEventImage(await serviceFactory.get('communities').events(buildCriteriaFrom({...req.params, ...req.query})))));
 router.put('/:communityID/joinRequest', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').makeRequest({communityID : req.params.communityID, ...req.body})))
 router.get('/joinRequests/given', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').joinRequests(buildCriteriaFrom({...req.query}))));
 router.patch('/:joinRequestID/update', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('communities').updateJoinRequest(buildCriteriaFrom({id: req.params.joinRequestID, ...req.query}), req.body)));
 router.delete('/:communityID/:userID/cancelRequest', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').cancelRequest(buildCriteriaFrom({...req.params, ...req.query}))));
+router.get('/:communityID/:userID/isJoined', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('communities').isJoined(buildCriteriaFrom({...req.params, ...req.query}))))
+router.delete('/:id/deleteAnnouncement', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('communities').deleteAnnouncement(buildCriteriaFrom({...req.params, ...req.query}))))
 
 export default router;

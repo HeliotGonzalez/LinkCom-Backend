@@ -1,5 +1,6 @@
 import {Service} from "./Service.js";
 import { builderFactory } from "../../../application/utils/CiteriaUtils.js";
+import { saveImage } from "../../../application/utils/imagesStore.js";
 
 /**
  * @implements {Service}
@@ -22,6 +23,18 @@ export class CommunityService extends Service {
 
     async update(criteria = [], parameters) {
         return await this.factory.get('Communities').update(criteria, parameters);
+    }
+
+    async updateWithImage(id, parameters) {
+        const updateResponse = await this.factory.get('Communities').update([builderFactory.get('eq')('id', id).build()],parameters);
+    
+        if (updateResponse.success && parameters.imagePath) {
+          const folder = `../../images/communities/${id}`;
+          const newImagePath = await saveImage(parameters.imagePath, folder);
+          await this.factory.get('Communities').update([builderFactory.get('eq')('id', id).build()],{ imagePath: newImagePath });
+        }
+        console.log('Update response:', updateResponse);
+        return updateResponse;
     }
     
     async remove(criteria = []) {
@@ -48,6 +61,10 @@ export class CommunityService extends Service {
         return await this.factory.get('Announcements').get(criteria);
     }
 
+    async createAnnouncement(parammeters) {
+        return await this.factory.get('Announcements').create(parammeters);
+    }
+
     async events(criteria) {
         return await this.factory.get('Events').get(criteria);
     }
@@ -68,6 +85,12 @@ export class CommunityService extends Service {
         return await this.factory.get('JoinRequests').remove(criteria);
     }
 
+    async isJoined(criteria = []) {
+        const response = this.get(criteria);
+        response.data[0] = response.data.length > 0;
+        return response;
+    }
+
     async getNonBelongingCommunities(userID, extraCriteria = []) {
         console.log('[CommunityService] getNonBelongingCommunities → userID:', userID);
     
@@ -85,6 +108,7 @@ export class CommunityService extends Service {
     
         const criteria = [
           ...extraCriteria,
+          builderFactory.get('eq')('isPrivate', false).build(),
           builderFactory.get('eq')('isPrivate', false).build()
         ];
         const commRes = await this.factory.get('Communities').get(criteria);
@@ -125,5 +149,11 @@ export class CommunityService extends Service {
         // 2. Actualizamos la fila
         return await this.factory.get("Communities").update(criteria, parameters);
     }
-        */
+    */
+
+    async deleteAnnouncement(criteria = []) {
+        return await this.factory.get("Announcements").remove(criteria);
+    }
+
+
 }

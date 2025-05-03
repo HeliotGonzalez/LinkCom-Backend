@@ -208,20 +208,6 @@ app.get('/communityEvents', async (req, res) => {
     res.status(201).json({message: 'Community events found!', data: communityEventsResponse.data});
 });
 
-app.get('/events', async (req, res) => {
-    const eventsResponse = await executeQuery(supabase.from('Events').select('*'));
-    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse["error"]});
-
-    res.status(201).json({message: 'User events found!', data: eventsResponse.data});
-});
-
-app.get('/interests', async (req, res) => {
-    const interestsResponse = await executeQuery(supabase.from('Interests').select('*'));
-    if (!interestsResponse.success) return res.status(500).json({error: interestsResponse["error"]});
-
-    res.status(201).json({message: 'Interests found!', data: interestsResponse.data});
-});
-
 app.get('/test', async (req, res) => {
     const {data, error} = await supabase.from('test').select('*');
 
@@ -587,3 +573,87 @@ app.get('/userCommunities', async (req, res) => {
 
     return res.status(201).json({message: 'User communities found!', data: userCommunitiesResponse.data});
 });
+
+app.post('/createAnnouncement', async (req, res) => {
+  const {title, body, communityID, publisherID} = req.body;
+
+    try {
+        console.log('communityID:', communityID);
+        const {data, error} = await supabase.from('Announcements').insert([{
+          title, 
+          body, 
+          communityID,  
+          publisherID
+        }]).select('*');
+        console.log(data);
+        console.log("1", error);
+        if (error) {
+            return res.status(500).json({error: error.message});
+        }
+
+        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
+
+    } catch (err) {
+        console.log("2", err);
+        return res.status(500).json({error: 'Error inesperado'});
+    }
+});
+
+app.get('/announcements', async (req, res) => {
+    const {communityID} = req.query;
+
+    if (!communityID) {
+        return res.status(400).json({error: 'El parámetro communityID es requerido'});
+    }
+
+    try {
+        const {data, error} = await supabase.from('Announcemments').select('*').eq('communityID', communityID).order('created_at', { ascending: true });
+        if (error) {
+            console.log(error);
+            return res.status(500).json({error: error.message});
+        }
+        console.log(res);
+        return res.json({data});
+
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+
+});
+
+async function registerUser(data) {
+    const {email, password, username, description} = data;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    try {
+        // Register the user with Supabase Auth
+        const {data, error} = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            console.error('Error during user registration:', error);
+        }
+
+        // Insert additional user data into the Users table
+        const {data: userData, error: userError} = await supabase.from('Users').insert([
+            {
+                id: data.user.id, // Use the ID from Supabase Auth
+                username: username,
+                email: email,
+                description: description,
+            },
+        ]);
+
+        if (userError) {
+            console.error('Error inserting user into Users table:', userError);
+        }
+
+        res.status(201).json({message: 'User registered successfully', user: userData});
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
