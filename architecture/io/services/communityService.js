@@ -1,5 +1,6 @@
 import {Service} from "./Service.js";
 import { builderFactory } from "../../../application/utils/CiteriaUtils.js";
+import { saveImage } from "../../../application/utils/imagesStore.js";
 
 /**
  * @implements {Service}
@@ -24,6 +25,18 @@ export class CommunityService extends Service {
         return await this.factory.get('Communities').update(criteria, parameters);
     }
 
+    async updateWithImage(id, parameters) {
+        const updateResponse = await this.factory.get('Communities').update([builderFactory.get('eq')('id', id).build()],parameters);
+    
+        if (updateResponse.success && parameters.imagePath) {
+          const folder = `../../images/communities/${id}`;
+          const newImagePath = await saveImage(parameters.imagePath, folder);
+          await this.factory.get('Communities').update([builderFactory.get('eq')('id', id).build()],{ imagePath: newImagePath });
+        }
+        console.log('Update response:', updateResponse);
+        return updateResponse;
+    }
+    
     async remove(criteria = []) {
         return await this.factory.get('Communities').remove(criteria);
     }
@@ -79,31 +92,37 @@ export class CommunityService extends Service {
     }
 
     async getNonBelongingCommunities(userID, extraCriteria = []) {
-        if (!userID) return { success: false, error: 'userID requerido' };
-
-        /* 1. Comunidades a las que SÍ pertenece el usuario */
-        const memberships = await this.factory.get('CommunityUser').get([
+        console.log('[CommunityService] getNonBelongingCommunities → userID:', userID);
+    
+        if (!userID) {
+          return { success: false, error: 'userID requerido' };
+        }
+    
+        const membershipsRes = await this.factory.get('CommunityUser').get([
           builderFactory.get('eq')('userID', userID).build()
         ]);
-        if (!memberships.success) return memberships;
-
-        const joinedIDs = memberships.data.map(m => m.communityID);
-
-        /* 2. Criterios finales */
+        if (!membershipsRes.success) return membershipsRes;
+    
+        const joinedIDs = (membershipsRes.data ?? []).map(m => m.communityID);
+        console.log('[CommunityService] joinedIDs:', joinedIDs);
+    
         const criteria = [
           ...extraCriteria,
+          builderFactory.get('eq')('isPrivate', false).build(),
           builderFactory.get('eq')('isPrivate', false).build()
         ];
-        if (joinedIDs.length) {
-          criteria.push(builderFactory.get('nin')('id', joinedIDs).build());
-        }
-
-        /* 3. Consulta de comunidades */
-        return this.factory.get('Communities').get(criteria);
+        const commRes = await this.factory.get('Communities').get(criteria);
+        if (!commRes.success) return commRes;
+    
+        const nonBelonging = commRes.data.filter(c => !joinedIDs.includes(c.id));
+        console.log('[CommunityService] non-belonging result:', nonBelonging.length);
+    
+        return { success: true, data: nonBelonging };
     }
 
 
     /* ---------- PATCH con imagen ---------- */
+    /*
     async update(criteria = [], parameters) {
         // 1. Si llega una nueva imagen en Base64 la persistimos
         if (parameters.imageBase64) {
@@ -113,7 +132,6 @@ export class CommunityService extends Service {
             (criteria.find(c => c.key === "id")?.value ?? null);
 
         if (!communityID) {
-            /* Último recurso: consultamos para extraer el id */
             const current = await this.factory.get("Communities").get(criteria);
             if (current.success && current.data.length) {
             communityID = current.data[0].id;
@@ -131,4 +149,11 @@ export class CommunityService extends Service {
         // 2. Actualizamos la fila
         return await this.factory.get("Communities").update(criteria, parameters);
     }
+    */
+
+    async deleteAnnouncement(criteria = []) {
+        return await this.factory.get("Announcements").remove(criteria);
+    }
+
+
 }

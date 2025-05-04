@@ -13,6 +13,7 @@ repositoryFactory
     .put('UserInterest', new SupabaseRepository('UserInterest'))
     .put('EventInterest', new SupabaseRepository('EventInterest'))
     .put('Interests', new SupabaseRepository('Interests'))
-    .put('JoinRequests', new SupabaseRepository('JoinRequests'));
+    .put('JoinRequests', new SupabaseRepository('JoinRequests'))
+    .put('Comments', new SupabaseRepository('Comments'));
 
 export default repositoryFactory;
