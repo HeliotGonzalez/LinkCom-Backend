@@ -29,7 +29,7 @@ export class EventService extends Service {
         return await this.factory.get('Events').create(parameters);
     }
 
-    async remove(criteria = []) {
+    async remove(criteria) {
         return await this.factory.get('Events').remove(criteria);
     }
 
