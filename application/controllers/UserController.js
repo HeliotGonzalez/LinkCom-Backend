@@ -29,13 +29,13 @@ router.get('/:userID/communities', async (req, res) => {
         response
     ));
 });
+
 router.get('/:userID/events', async (req, res) => {
-    const response = await serviceFactory.get('users').events(
-            buildCriteriaFrom({...req.params, ...req.query})
-    );
+    const response = await serviceFactory.get('users').events(buildCriteriaFrom({...req.params, ...req.query}));
+    
     if (response.success) response.data = response.data.map(e => e.Events)
-    return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(
-            response
-    ));
+
+    return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(response));
 });
+
 export default router;

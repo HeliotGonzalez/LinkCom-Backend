@@ -39,7 +39,6 @@ router.get('/excluding/:userID', async (req, res) => {
 router.patch('/:id', async (req, res) => {
     const communityId = req.params.id;
     const { name, description, isPrivate, imageBase64 } = req.body;
-    console.log('Aquí', communityId, req.body);
   
 
     const params = { name, description, isPrivate };

@@ -33,7 +33,6 @@ export class CommunityService extends Service {
           const newImagePath = await saveImage(parameters.imagePath, folder);
           await this.factory.get('Communities').update([builderFactory.get('eq')('id', id).build()],{ imagePath: newImagePath });
         }
-        console.log('Update response:', updateResponse);
         return updateResponse;
     }
     
@@ -92,8 +91,6 @@ export class CommunityService extends Service {
     }
 
     async getNonBelongingCommunities(userID, extraCriteria = []) {
-        console.log('[CommunityService] getNonBelongingCommunities → userID:', userID);
-    
         if (!userID) {
           return { success: false, error: 'userID requerido' };
         }
@@ -104,7 +101,6 @@ export class CommunityService extends Service {
         if (!membershipsRes.success) return membershipsRes;
     
         const joinedIDs = (membershipsRes.data ?? []).map(m => m.communityID);
-        console.log('[CommunityService] joinedIDs:', joinedIDs);
     
         const criteria = [
           ...extraCriteria,
@@ -115,41 +111,9 @@ export class CommunityService extends Service {
         if (!commRes.success) return commRes;
     
         const nonBelonging = commRes.data.filter(c => !joinedIDs.includes(c.id));
-        console.log('[CommunityService] non-belonging result:', nonBelonging.length);
     
         return { success: true, data: nonBelonging };
     }
-
-
-    /* ---------- PATCH con imagen ---------- */
-    /*
-    async update(criteria = [], parameters) {
-        // 1. Si llega una nueva imagen en Base64 la persistimos
-        if (parameters.imageBase64) {
-        // Averiguamos el ID de la comunidad (viene en criterio 'eq id' o en los datos)
-        let communityID =
-            parameters.id ||
-            (criteria.find(c => c.key === "id")?.value ?? null);
-
-        if (!communityID) {
-            const current = await this.factory.get("Communities").get(criteria);
-            if (current.success && current.data.length) {
-            communityID = current.data[0].id;
-            // Borramos la vieja imagen (opcional)
-            await removeImage(`../../images/communities/${communityID}/communityImage.png`);
-            }
-        }
-        parameters.imagePath = await saveImage(
-            parameters.imageBase64,
-            `../../images/communities/${communityID}`
-        );
-        delete parameters.imageBase64;           // ya no hace falta
-        }
-
-        // 2. Actualizamos la fila
-        return await this.factory.get("Communities").update(criteria, parameters);
-    }
-    */
 
     async deleteAnnouncement(criteria = []) {
         return await this.factory.get("Announcements").remove(criteria);

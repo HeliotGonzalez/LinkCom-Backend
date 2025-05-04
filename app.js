@@ -324,7 +324,7 @@ app.get('/feed', async (req, res) => {
 
         // 5. Transformar los datos al formato del feed
         const eventsFeed = eventsData.map(ev => ({
-            id: ev.ID,           // Ajusta según tu esquema (puede ser "ID" o "id")
+            id: ev.ID,
             type: 'event',
             communityID: ev.communityID,
             title: ev.title,
