@@ -38,5 +38,6 @@ router.get('/joined/:userID', async (req, res) => {
     if (response.success) response.data = response.data.map(e => e['Events']);
     handleError(HTTPMethodsMap.GET, res, response)
 });
+router.patch('/:id/update', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('events').update(buildCriteriaFrom({...req.params, ...req.query}), req.body)));
 
 export default router;

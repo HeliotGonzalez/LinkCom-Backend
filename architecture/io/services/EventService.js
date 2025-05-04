@@ -26,11 +26,15 @@ export class EventService extends Service {
     }
 
     async create(parameters) {
-        return await this.factory.get('Events').create(parameters);
+        const res = await this.factory.get('Events').create(parameters);
+        console.log(res)
+        return res;
     }
 
     async remove(criteria) {
-        return await this.factory.get('Events').remove(criteria);
+        const res = await this.factory.get('Events').remove(criteria);
+        console.log(res)
+        return res;
     }
 
     async userEvents(criteria = []) {
