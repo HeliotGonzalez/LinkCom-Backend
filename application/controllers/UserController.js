@@ -38,4 +38,12 @@ router.get('/:userID/events', async (req, res) => {
     return handleError(HTTPMethodsMap.GET, res, await fillingCommunityImage(response));
 });
 
+router.post('/:userID/makeFriendRequest', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('users').makeFriendRequest({...req.params, ...req.body})));
+router.get('/:userID/getFriends', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').getFriends(buildCriteriaFrom({...req.query}))));
+router.patch('/:userID/updateFriendStatus', async (req, res) => {
+    const response = await serviceFactory.get('users').updateFriendStatus(buildCriteriaFrom({...req.params, ...req.query}), req.body);
+    if (response.data[0]['status'] === 'accepted') handleError(HTTPMethodsMap.PATCH, res, response);
+});
+router.delete('/:userID/deleteFriend', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('users').removeFriend(buildCriteriaFrom({...req.params, ...req.query}))));
+
 export default router;

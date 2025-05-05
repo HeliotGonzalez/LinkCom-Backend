@@ -119,5 +119,4 @@ export class CommunityService extends Service {
         return await this.factory.get("Announcements").remove(criteria);
     }
 
-
 }

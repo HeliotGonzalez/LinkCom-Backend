@@ -93,8 +93,24 @@ export class UserService extends Service {
       return { success: true, data: profileData };
     }
           
-
     async events(criteria = []) {
         return await this.factory.get('EventUser').getWithJoin('Events', criteria);
     }
+
+    async makeFriendRequest(parameters) {
+      return await this.factory.get('Friends').create(parameters);
+    }
+
+    async getFriends(criteria = []) {
+      return await this.factory.get('Friends').get(criteria);
+    }
+
+    async updateFriendStatus(criteria = [], parameters) {
+      return await this.factory.get('Friends').update(criteria, parameters);
+    }
+
+    async removeFriend(criteria = []) {
+      return await this.factory.get('Friends').remove(criteria);
+    }
+
 }
