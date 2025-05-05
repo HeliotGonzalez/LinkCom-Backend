@@ -97,20 +97,53 @@ export class UserService extends Service {
         return await this.factory.get('EventUser').getWithJoin('Events', criteria);
     }
 
+    async addFriend(user1ID, user2ID) {
+      return await this.factory.get('Friends').create({user1ID, user2ID});
+    }
+
+    /* Devuelve los amigos del usuario pasado por parámetro WIP */
+    async getFriends(userID, criteria = []) {
+      const friendsRes = await this.factory.get('Friends').get(criteria);
+      if (!friendsRes.success) return { success: false, error: friendsRes.error };
+  
+      const friendIDs = friendsRes.data.map(row =>
+          row.user1ID === userID ? row.user2ID : row.user1ID
+      );
+  
+      if (!friendIDs.length) return { success: true, data: [] };
+  
+      const usersCriteria = [
+          builderFactory.get('in')('id', friendIDs).build()
+      ];
+  
+      const usersRes = await this.factory.get('Users').get(usersCriteria);
+      if (!usersRes.success) return { success: false, error: usersRes.error };
+  
+      return { success: true, data: usersRes.data };
+  }
+
     async makeFriendRequest(parameters) {
-      return await this.factory.get('Friends').create(parameters);
+      const response = await this.factory.get('FriendRequests').create(parameters);
+      console.log(response);
+      return response;
     }
 
-    async getFriends(criteria = []) {
-      return await this.factory.get('Friends').get(criteria);
+    async friendRequests(criteria = []) {
+      const response = await this.factory.get('FriendRequests').get(criteria);
+      console.log(response);
+      return response;
     }
 
-    async updateFriendStatus(criteria = [], parameters) {
-      return await this.factory.get('Friends').update(criteria, parameters);
+    async updateFriendRequest(criteria = [], parameters) {
+      const response = await this.factory.get('FriendRequests').update(criteria, parameters);
+      console.log(response);
+      return response;
     }
 
-    async removeFriend(criteria = []) {
-      return await this.factory.get('Friends').remove(criteria);
+    async cancelFriendRequest(criteria = []) {
+      const response = await this.factory.get('FriendRequests').remove(criteria);
+      console.log(response);
+      return response;
     }
 
 }

@@ -15,6 +15,7 @@ repositoryFactory
     .put('Interests', new SupabaseRepository('Interests'))
     .put('JoinRequests', new SupabaseRepository('JoinRequests'))
     .put('Comments', new SupabaseRepository('Comments'))
-    .put('Friends', new SupabaseRepository('Friends'));
+    .put('Friends', new SupabaseRepository('Friends'))
+    .put('FriendRequests', new SupabaseRepository('FriendRequests'));
 
 export default repositoryFactory;
