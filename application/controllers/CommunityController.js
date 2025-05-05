@@ -36,6 +36,7 @@ router.get('/excluding/:userID', async (req, res) => {
         [...buildCriteriaFrom(req.query), builderFactory.get('nin')('id', userCommunities).build()]
     )));
 });
+
 router.patch('/:id', async (req, res) => {
     const communityId = req.params.id;
     const { name, description, isPrivate, imageBase64 } = req.body;
