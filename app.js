@@ -152,6 +152,12 @@ app.get('/communities', async (req, res) => {
     res.json(communitiesResponse.data);
 });
 
+app.get('/interests', async (req, res) => {
+    const communitiesResponse = await executeQuery(supabase.from('Interests').select('*'));
+    if (!communitiesResponse.success) return res.status(500).json({error: communitiesResponse["error"]});
+    res.json(communitiesResponse.data);
+});
+
 app.post('/createEvent', async (req, res) => {
     const {title, description, communityID, userID, date} = req.body;
 
