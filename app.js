@@ -1,21 +1,41 @@
 // app.js
 import express from 'express';
+import * as http from "node:http";
 import cors from 'cors';
 import supabase from './config/supabaseClient.js';
 import {getUser, getCommunityIds, getRecentEvents, getRecentAnnounces} from './feedService.js';
-import {getImage, saveImage} from "./imagesStore.js";
+import {getImage, saveImage} from "./application/utils/imagesStore.js";
+import communityRouter from './application/controllers/CommunityController.js';
+import userRouter from './application/controllers/UserController.js';
+import eventRouter from './application/controllers/EventController.js';
+import {Server} from "socket.io";
+import {initializeSockets} from "./application/utils/DomainSocketsInitializer.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({limit: '50mb'}));
 
-app.use(express.urlencoded({limit: '50mb', extended: true}));  // Si usas formularios
+app.use(express.urlencoded({limit: '50mb', extended: true})); // MODIFICAR LÍMITE DE PETICIÓN SI ES NECESARIO
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*'
+    }
+});
+
+server.listen(3001, () => console.log('Servidor para sockets inicializado!'));
+
+io.on('connection', (socket) => {
+    console.log('Frontend conectado por socket:', socket.id);
+});
+
+initializeSockets(supabase, io);
 
 const executeQuery = async (query) => {
     const {data, error} = await query;
@@ -27,6 +47,10 @@ const executeQuery = async (query) => {
 
     return {success: true, data};
 };
+
+app.use('/communities', communityRouter);
+app.use('/users', userRouter);
+app.use('/events', eventRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;
@@ -87,7 +111,7 @@ app.post('/createCommunity', async (req, res) => {
     const setUserCommunityResponse = await executeQuery(supabase.from('CommunityUser').insert([{
         communityID,
         userID,
-        communityRole: "creator"
+        communityRole: "administrator"
     }]));
     if (!setUserCommunityResponse["success"]) return res.status(500).json({error: setUserCommunityResponse["error"]});
 
@@ -128,15 +152,21 @@ app.get('/communities', async (req, res) => {
     res.json(communitiesResponse.data);
 });
 
+app.get('/interests', async (req, res) => {
+    const communitiesResponse = await executeQuery(supabase.from('Interests').select('*'));
+    if (!communitiesResponse.success) return res.status(500).json({error: communitiesResponse["error"]});
+    res.json(communitiesResponse.data);
+});
+
 app.post('/createEvent', async (req, res) => {
-    const {title, description, communityID, userID, dateOfTheEvent} = req.body;
+    const {title, description, communityID, userID, date} = req.body;
 
     const createEventResponse = await executeQuery(supabase.from('Events').insert([{
         title,
         description,
         communityID,
         userID,
-        dateOfTheEvent
+        date
     }]));
     if (!createEventResponse.success) return res.status(500).json({error: createEventResponse["error"]});
 
@@ -172,7 +202,7 @@ app.get('/userEvents', async (req, res) => {
 app.get('/communityEvents', async (req, res) => {
     const {communityID} = req.query;
 
-    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('dateOfTheEvent', {ascending: true}));
+    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('date', {ascending: true}));
     if (!communityEventsResponse.success) return res.status(500).json({error: communityEventsResponse["error"]});
 
     let i = 0;
@@ -182,20 +212,6 @@ app.get('/communityEvents', async (req, res) => {
     }
 
     res.status(201).json({message: 'Community events found!', data: communityEventsResponse.data});
-});
-
-app.get('/events', async (req, res) => {
-    const eventsResponse = await executeQuery(supabase.from('Events').select('*'));
-    if (!eventsResponse.success) return res.status(500).json({error: eventsResponse["error"]});
-
-    res.status(201).json({message: 'User events found!', data: eventsResponse.data});
-});
-
-app.get('/interests', async (req, res) => {
-    const interestsResponse = await executeQuery(supabase.from('Interests').select('*'));
-    if (!interestsResponse.success) return res.status(500).json({error: interestsResponse["error"]});
-
-    res.status(201).json({message: 'Interests found!', data: interestsResponse.data});
 });
 
 app.get('/test', async (req, res) => {
@@ -314,7 +330,7 @@ app.get('/feed', async (req, res) => {
 
         // 5. Transformar los datos al formato del feed
         const eventsFeed = eventsData.map(ev => ({
-            id: ev.ID,           // Ajusta según tu esquema (puede ser "ID" o "id")
+            id: ev.ID,
             type: 'event',
             communityID: ev.communityID,
             title: ev.title,
@@ -403,43 +419,6 @@ app.get('/communitiesEventsExcludingUser', async (req, res) => {
     });
 });
 
-// GET /nonBelongingCommunities -> Devuelve la lista de comunidades desde la tabla "Communities"
-app.get('/nonBelongingCommunities', async (req, res) => {
-    const {userId} = req.query;
-
-    if (!userId) {
-        return res.status(400).json({error: 'El parámetro userId es requerido'});
-    }
-
-    try {
-        const {data: user, error: userError} = await supabase.from('Users').select('*').eq('id', userId).single();
-
-        // Consulta 1: Obtener comunidades públicas
-        const {data, error} = await supabase.from('Communities').select('id, userID, name, description, created_at')
-            .eq('isPrivate', false)
-            .limit(3);
-
-        // Consulta 2: Obtener las comunidades en las que el usuario ya está
-        const {data: memberships, error: membershipsError} = await supabase
-            .from('CommunityUser')
-            .select('communityID')
-            .eq('userID', user.id);
-
-        // Extraer los IDs de las comunidades a las que pertenece el usuario
-        const membershipIDs = memberships.map(item => item.communityID);
-
-        // Filtrar las comunidades para eliminar aquellas en las que el usuario ya está
-        const filteredCommunities = data.filter(community => !membershipIDs.includes(community.id));
-
-
-        if (error) return res.status(500).json({error: error.message});
-        return res.json(filteredCommunities);
-
-    } catch (error) {
-        res.status(500).json({error: error.message});
-    }
-});
-
 // GET /events -> Devuelve los eventos a los que el usuario pertenece
 app.get('/getCalendarEvents', async (req, res) => {
     const {userID} = req.query;
@@ -472,62 +451,6 @@ app.get('/getCalendarEvents', async (req, res) => {
     } catch (error) {
         console.error('Error al obtener eventos del usuario:', error);
         return res.status(500).json({error: error.message});
-    }
-});
-
-// POST /
-app.post('/joinEvent', async (req, res) => {
-    const {userID, eventID, communityID} = req.body;
-
-    if (!userID || !eventID || !communityID) {
-        return res.status(400).json({error: 'userID, eventID y communityID son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
-
-    try {
-        const {data, error} = await supabase.from('EventUser').insert([{userID, eventID, communityID, created_at}]);
-
-        if (error) {
-            console.error('Error al crear EventUser:', error);
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'EventUser creado correctamente', data});
-    } catch (err) {
-        console.error('Error inesperado:', err);
-        return res.status(500).json({error: 'Error inesperado'});
-    }
-});
-
-app.post('/joinCommunity', async (req, res) => {
-    const {userID, communityID} = req.body;
-
-    if (!userID || !communityID) {
-        return res.status(400).json({error: 'userID y communityID son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
-    const communityRole = 'member';
-
-    try {
-        const {data, error} = await supabase.from('CommunityUser').insert([{
-            userID,
-            communityID,
-            created_at,
-            communityRole
-        }]);
-
-        if (error) {
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
-
-    } catch (err) {
-        return res.status(500).json({error: 'Error inesperado'});
     }
 });
 
@@ -577,7 +500,7 @@ app.get('/updateusers', async (req, res) => {
 });
 
 app.get('/community', async (req, res) => {
-    const { communityID } = req.query;
+    const {communityID} = req.query;
 
     if (!communityID) {
         return res.status(400).json({error: 'communityID es requerido'});
@@ -592,16 +515,7 @@ app.get('/community', async (req, res) => {
 });
 
 app.post('/leaveCommunity', async (req, res) => {
-    const { userID, communityID } = req.body;
-
-    const leaveEventResponse = await executeQuery(
-        supabase.from('EventUser')
-            .delete()
-            .eq('userID', userID)
-            .eq('communityID', communityID)
-            .select('*')
-    );
-    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+    const {userID, communityID} = req.body;
 
     const leaveCommunityResponse = await executeQuery(
         supabase.from('CommunityUser')
@@ -614,11 +528,23 @@ app.post('/leaveCommunity', async (req, res) => {
 
     console.log(leaveCommunityResponse.data)
 
-    return res.status(201).json({message: 'Community left properly', data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}});
+    const leaveEventResponse = await executeQuery(
+        supabase.from('EventUser')
+            .delete()
+            .eq('userID', userID)
+            .eq('communityID', communityID)
+            .select('*')
+    );
+    if (!leaveEventResponse.success) return res.status(500).json({error: leaveEventResponse["error"]});
+
+    return res.status(201).json({
+        message: 'Community left properly',
+        data: {community: leaveCommunityResponse.data, events: leaveEventResponse.data}
+    });
 });
 
 app.post('/leaveEvent', async (req, res) => {
-    const { userID, eventID } = req.body;
+    const {userID, eventID} = req.body;
 
     const leaveEventResponse = await executeQuery(
         supabase.from('EventUser')
@@ -633,7 +559,7 @@ app.post('/leaveEvent', async (req, res) => {
 });
 
 app.get('/userCommunities', async (req, res) => {
-    const { userID } = req.query;
+    const {userID} = req.query;
 
     const userCommunitiesIDsResponse = await executeQuery(
         supabase.from('CommunityUser')
@@ -655,27 +581,18 @@ app.get('/userCommunities', async (req, res) => {
 });
 
 app.post('/createAnnouncement', async (req, res) => {
-  const {title, body, communityID, userID, communityName, publisherID} = req.body;
-
-    if (!userID || !title || !body || !communityID || !communityName || !publisherID) {
-        return res.status(400).json({error: 'Todos los campos son requeridos'});
-    }
-
-    // Asignar la fecha de creación actual en formato ISO
-    const created_at = new Date().toISOString();
+  const {title, body, communityID, publisherID} = req.body;
 
     try {
-        console.log('userID:', userID);
         console.log('communityID:', communityID);
-        const {data, error} = await supabase.from('Announces').insert([{
+        const {data, error} = await supabase.from('Announcements').insert([{
           title, 
           body, 
-          communityID, 
-          userID, 
-          communityName, 
+          communityID,  
           publisherID
-        }]);
-
+        }]).select('*');
+        console.log(data);
+        console.log("1", error);
         if (error) {
             return res.status(500).json({error: error.message});
         }
@@ -683,6 +600,7 @@ app.post('/createAnnouncement', async (req, res) => {
         return res.status(201).json({message: 'El usuario se ha unido a la comunidad correctamente', data});
 
     } catch (err) {
+        console.log("2", err);
         return res.status(500).json({error: 'Error inesperado'});
     }
 });
@@ -695,7 +613,7 @@ app.get('/announcements', async (req, res) => {
     }
 
     try {
-        const {data, error} = await supabase.from('Announces').select('*').eq('communityID', communityID).order('created_at', { ascending: true });
+        const {data, error} = await supabase.from('Announcemments').select('*').eq('communityID', communityID).order('created_at', { ascending: true });
         if (error) {
             console.log(error);
             return res.status(500).json({error: error.message});
