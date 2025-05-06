@@ -7,6 +7,7 @@ import {PaginationCriteria} from "./PaginationCriteria.js";
 import {InCriteria} from "./InCriteria.js";
 import {OrderCriteria} from "./OrderCriteria.js";
 import {LimitCriteria} from "./LimitCriteria.js";
+import { OrCriteria } from "./OrCriteria.js";
 
 const criteriaMap = {
     eq: EqualCriteria,
@@ -17,7 +18,8 @@ const criteriaMap = {
     nin: NotInCriteria,
     pagination: PaginationCriteria,
     order: OrderCriteria,
-    limit: LimitCriteria
+    limit: LimitCriteria,
+    or: OrCriteria
 };
 
 export default criteriaMap;

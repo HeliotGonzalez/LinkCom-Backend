@@ -42,7 +42,7 @@ router.post('/:from/makeFriendRequest', async (req, res) => handleError(HTTPMeth
 router.get('/:to/friendRequests', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').friendRequests(buildCriteriaFrom({...req.query}))));
 router.patch('/:from/updateFriendRequest', async (req, res) => {
     const response = await serviceFactory.get('users').updateFriendRequest(buildCriteriaFrom({...req.params, ...req.query}), req.body);
-    if (response.data[0]['status'] === 'accepted') await serviceFactory.get('users').addFriend(response.data[0]['user1ID'], response.data[0]['user2ID']);
+    if (response.data[0]['status'] === 'accepted') await serviceFactory.get('users').addFriend(response.data[0]['from'], response.data[0]['to']);
     handleError(HTTPMethodsMap.PATCH, res, response);
 });
 router.delete('/:from/cancelFriendRequest', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('users').cancelFriendRequest(buildCriteriaFrom({...req.params, ...req.query}))));
@@ -50,14 +50,8 @@ router.delete('/:from/cancelFriendRequest', async (req, res) => handleError(HTTP
 router.get('/:userID/getFriends', async (req, res) => {
     const userID = req.params.userID;
 
-    const criteria = [
-        builderFactory.get('or')([
-            builderFactory.get('eq')('user1ID', userID).build(),
-            builderFactory.get('eq')('user2ID', userID).build()
-        ]).build()
-    ];
+    const result = await serviceFactory.get('users').getFriends(userID);
 
-    const result = await serviceFactory.get('users').getFriends(userID, criteria);
     return handleError(HTTPMethodsMap.GET, res, result);
 });
 
