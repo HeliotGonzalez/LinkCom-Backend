@@ -17,7 +17,10 @@ const buildCriteriaFromFrontend = (raw) => {
 }
 
 router.get('/:criteria', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('messages').get(buildCriteriaFromFrontend(atob(req.params['criteria'])))));
-router.put('/', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('messages').send(req.body)));
+router.put('/', async (req, res) => {
+    console.log(req.body)
+    handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('messages').send(req.body))
+});
 router.patch('/:criteria', async (req, res) => handleError(HTTPMethodsMap.PATCH, res, await serviceFactory.get('messages').update(buildCriteriaFromFrontend(atob(req.params['criteria']), req.body))));
 router.delete('/:criteria', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('messages').delete(buildCriteriaFromFrontend(atob(req.params['criteria'])))));
 

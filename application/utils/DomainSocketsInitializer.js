@@ -11,5 +11,6 @@ export const initializeSockets = (socket, io) => {
         .put('EventUser', new SupabaseDomainSocket(socket, io, 'EventUser'))
         .put('Users', new SupabaseDomainSocket(socket, io, 'Users'))
         .put('Friends', new SupabaseDomainSocket(socket, io, 'Friends'))
-        .put('FriendRequests', new SupabaseDomainSocket(socket, io, 'FriendRequests'));
+        .put('FriendRequests', new SupabaseDomainSocket(socket, io, 'FriendRequests'))
+        .put('Messages', new SupabaseDomainSocket(socket, io, 'Messages'))
 }
