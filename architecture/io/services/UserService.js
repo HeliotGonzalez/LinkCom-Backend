@@ -101,19 +101,23 @@ export class UserService extends Service {
       return await this.factory.get('Friends').create({user1ID, user2ID});
     }
 
-    /* Devuelve los amigos del usuario pasado por parámetro WIP */
-    async getFriends(userID, criteria = []) {
+    async getFriends(userID) {
+      const criteria = [
+          builderFactory.get('or')(null, `user1ID.eq.${userID},user2ID.eq.${userID}`).build()
+      ];
+  
       const friendsRes = await this.factory.get('Friends').get(criteria);
       if (!friendsRes.success) return { success: false, error: friendsRes.error };
   
-      const friendIDs = friendsRes.data.map(row =>
+      const friendIDs = (friendsRes.data || []).map(row =>
           row.user1ID === userID ? row.user2ID : row.user1ID
-      );
-  
+      ).map(String);  
       if (!friendIDs.length) return { success: true, data: [] };
   
+      console.log(friendIDs);
+  
       const usersCriteria = [
-          builderFactory.get('in')('id', friendIDs).build()
+          builderFactory.get('in')('id', friendIDs.join(',')).build()
       ];
   
       const usersRes = await this.factory.get('Users').get(usersCriteria);
@@ -121,7 +125,7 @@ export class UserService extends Service {
   
       return { success: true, data: usersRes.data };
   }
-
+  
     async makeFriendRequest(parameters) {
       const response = await this.factory.get('FriendRequests').create(parameters);
       console.log(response);
