@@ -13,9 +13,7 @@ export class MessageService extends Service {
     }
 
     async send(message) {
-        const res = await this.factory.get('Messages').create(message);
-        console.log(res)
-        return res;
+        return await this.factory.get('Messages').create(message);
     }
 
     async update(criteria = [], message) {
@@ -23,8 +21,6 @@ export class MessageService extends Service {
     }
 
     async delete(criteria = []) {
-        const res = await this.factory.get('Messages').remove(criteria);
-        console.log(res)
-        return res;
+        return await this.factory.get('Messages').remove(criteria);
     }
 }
