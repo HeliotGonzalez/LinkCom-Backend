@@ -16,7 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({limit: '50mb'}));
 
-app.use(express.urlencoded({limit: '50mb', extended: true}));  // Si usas formularios
+app.use(express.urlencoded({limit: '50mb', extended: true})); // MODIFICAR LÍMITE DE PETICIÓN SI ES NECESARIO
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
@@ -152,15 +152,21 @@ app.get('/communities', async (req, res) => {
     res.json(communitiesResponse.data);
 });
 
+app.get('/interests', async (req, res) => {
+    const communitiesResponse = await executeQuery(supabase.from('Interests').select('*'));
+    if (!communitiesResponse.success) return res.status(500).json({error: communitiesResponse["error"]});
+    res.json(communitiesResponse.data);
+});
+
 app.post('/createEvent', async (req, res) => {
-    const {title, description, communityID, userID, dateOfTheEvent} = req.body;
+    const {title, description, communityID, userID, date} = req.body;
 
     const createEventResponse = await executeQuery(supabase.from('Events').insert([{
         title,
         description,
         communityID,
         userID,
-        dateOfTheEvent
+        date
     }]));
     if (!createEventResponse.success) return res.status(500).json({error: createEventResponse["error"]});
 
@@ -196,7 +202,7 @@ app.get('/userEvents', async (req, res) => {
 app.get('/communityEvents', async (req, res) => {
     const {communityID} = req.query;
 
-    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('dateOfTheEvent', {ascending: true}));
+    const communityEventsResponse = await executeQuery(supabase.from('Events').select('*').eq('communityID', communityID).order('date', {ascending: true}));
     if (!communityEventsResponse.success) return res.status(500).json({error: communityEventsResponse["error"]});
 
     let i = 0;
@@ -324,7 +330,7 @@ app.get('/feed', async (req, res) => {
 
         // 5. Transformar los datos al formato del feed
         const eventsFeed = eventsData.map(ev => ({
-            id: ev.ID,           // Ajusta según tu esquema (puede ser "ID" o "id")
+            id: ev.ID,
             type: 'event',
             communityID: ev.communityID,
             title: ev.title,

@@ -50,3 +50,7 @@ builderFactory
         'order',
         (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.order).withKey(key).withValue(value)
     )
+    .put(
+        'or',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.or).withKey(key).withValue(value)
+    )
