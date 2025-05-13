@@ -20,6 +20,31 @@ export const buildCriteriaFrom = (criteriaFromQuery) => {
     return criteria;
 }
 
+export const buildCriteriaFromEncoded = (raw) => {
+    const criteria = JSON.parse(raw);
+    let filters = [...criteria.filters].map(f => isFilterGroup(f) ?
+        builderFactory.get(f.logic)('', buildCriteriaGroupString(f)).build() :
+        builderFactory.get(f.operator.value)(f.field, f.value).build());
+    if (criteria.order) filters.push(builderFactory.get('order')(criteria.order.field, criteria.order.direction).build());
+    return filters;
+}
+
+const isFilterGroup = (filter) => {
+    return 'logic' in filter;
+}
+
+const buildCriteriaGroupString = (group) => {
+    return group.logic === '&&' ? buildAndString(group.filters) : buildOrString(group.filters);
+}
+
+const buildAndString = (filters) => {
+    return `and(${filters.map(f => isFilterGroup(f) ? buildCriteriaGroupString(f) : `${f.field}.${f.operator.value}.${f.value}`).join(',')})`;
+}
+
+const buildOrString = (filters) => {
+    return filters.map(f => isFilterGroup(f) ? buildCriteriaGroupString(f) : `${f.field}.${f.operator.value}.${f.value}`).join(',');
+}
+
 export const builderFactory = new CriteriaBuilderFactory();
 builderFactory
     .put(
@@ -52,5 +77,9 @@ builderFactory
     )
     .put(
         'or',
+        (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.or).withKey(key).withValue(value)
+    )
+    .put(
+        '||',
         (key, value) => CriteriaBuilder.create().withCriterion(criteriaMap.or).withKey(key).withValue(value)
     )
