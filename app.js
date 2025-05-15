@@ -9,6 +9,7 @@ import communityRouter from './application/controllers/CommunityController.js';
 import userRouter from './application/controllers/UserController.js';
 import eventRouter from './application/controllers/EventController.js';
 import messageRouter from './application/controllers/MessageController.js';
+import notificationRouter from './application/controllers/NotificationController.js';
 import {Server} from "socket.io";
 import {initializeSockets} from "./application/utils/DomainSocketsInitializer.js";
 
@@ -53,6 +54,7 @@ app.use('/communities', communityRouter);
 app.use('/users', userRouter);
 app.use('/events', eventRouter);
 app.use('/messages', messageRouter);
+app.use('/notifications', notificationRouter);
 
 app.get('/removeCommunity', async (req, res) => {
     const {communityID} = req.query;

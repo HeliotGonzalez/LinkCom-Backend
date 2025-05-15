@@ -17,6 +17,7 @@ export class MessageService extends Service {
     }
 
     async update(criteria = [], message) {
+        console.log(message);
         return await this.factory.get('Messages').update(criteria, message);
     }
 
