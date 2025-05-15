@@ -1,6 +1,6 @@
 import {Service} from "./Service.js";
-import { builderFactory } from "../../../application/utils/CiteriaUtils.js";
-import { saveImage } from "../../../application/utils/imagesStore.js";
+import {builderFactory} from "../../../application/utils/CiteriaUtils.js";
+import {saveImage} from "../../../application/utils/imagesStore.js";
 
 /**
  * @implements {Service}
