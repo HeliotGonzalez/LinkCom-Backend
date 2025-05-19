@@ -21,7 +21,8 @@ export const buildCriteriaFrom = (criteriaFromQuery) => {
 }
 
 export const buildCriteriaFromEncoded = (raw) => {
-    const criteria = JSON.parse(raw);
+    if (!raw) return [];
+    const criteria = JSON.parse(atob(raw));
     let filters = [...criteria.filters].map(f => isFilterGroup(f) ?
         builderFactory.get(f.logic)('', buildCriteriaGroupString(f)).build() :
         builderFactory.get(f.operator.value)(f.field, f.value).build());

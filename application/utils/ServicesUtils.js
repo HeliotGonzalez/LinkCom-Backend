@@ -4,6 +4,7 @@ import repositoryFactory from "./RepositoriesUtils.js";
 import {UserService} from "../../architecture/io/services/UserService.js";
 import {EventService} from "../../architecture/io/services/EventService.js";
 import {MessageService} from "../../architecture/io/services/MessageService.js";
+import {NotificationService} from "../../architecture/io/services/NotificationService.js";
 
 export const serviceFactory = new ServiceFactory();
 serviceFactory
@@ -11,3 +12,4 @@ serviceFactory
     .put('users', new UserService(repositoryFactory))
     .put('events', new EventService(repositoryFactory))
     .put('messages', new MessageService(repositoryFactory))
+    .put('notifications', new NotificationService(repositoryFactory))

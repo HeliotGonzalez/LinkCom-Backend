@@ -11,6 +11,6 @@ export class OrderCriteria extends Criteria {
     }
 
     apply(query) {
-        return query.order(this.key, { ascending: this.value });
+        return query.order(this.key, { ascending: this.value === 'asc' });
     }
 }

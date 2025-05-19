@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {HTTPMethodsMap} from "../utils/HTTPUtils.js";
-import {buildCriteriaFrom, builderFactory, handleError} from "../utils/CiteriaUtils.js";
+import {buildCriteriaFrom, buildCriteriaFromEncoded, builderFactory, handleError} from "../utils/CiteriaUtils.js";
 import {serviceFactory} from "../utils/ServicesUtils.js";
 import {fillingCommunityImage, fillingEventImage, removeImage, saveImage} from "../utils/imagesStore.js";
 
@@ -61,8 +61,8 @@ router.delete('/:id', async (req, res) => {
 
 router.put('/:communityID/join', async (req, res) => handleError(HTTPMethodsMap.PUT, res, await serviceFactory.get('communities').join(req.params.communityID, req.body.userID, 'member')));
 
-router.get('/:communityID/members', async (req, res) => {
-    const membersRes = await serviceFactory.get('communities').members(buildCriteriaFrom({...req.params, ...req.query, communityRole: 'member'}));
+router.get('/:communityID/members/:criteria', async (req, res) => {
+    const membersRes = await serviceFactory.get('communities').members(buildCriteriaFromEncoded(req.params['criteria']));
     const userIDs = Array.isArray(membersRes.data) ? membersRes.data.map(u => u.userID) : [];
     const usersRes = await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${userIDs.join(',')}`}));
     return handleError(HTTPMethodsMap.GET, res, usersRes);

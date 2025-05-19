@@ -13,4 +13,6 @@ export const initializeSockets = (socket, io) => {
         .put('Friends', new SupabaseDomainSocket(socket, io, 'Friends'))
         .put('FriendRequests', new SupabaseDomainSocket(socket, io, 'FriendRequests'))
         .put('Messages', new SupabaseDomainSocket(socket, io, 'Messages'))
+        .put('Notifications', new SupabaseDomainSocket(socket, io, 'Notifications'))
+        .put('UserChat', new SupabaseDomainSocket(socket, io, 'UserChat'))
 }

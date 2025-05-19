@@ -11,6 +11,6 @@ export class InCriteria extends Criteria {
     }
 
     apply(query) {
-        return query.in(this.key, this.value.split(','));
+        return query.in(this.key, !Array.isArray(this.value) ? this.value.split(',') : this.value);
     }
 }

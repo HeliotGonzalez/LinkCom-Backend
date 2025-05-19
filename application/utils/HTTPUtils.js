@@ -15,7 +15,7 @@ export const HTTPCodesMap = {
         ERROR: 400
     },
     'DELETE': {
-        SUCCESS: 204,
+        SUCCESS: 200,
         ERROR: 404
     },
     'PATCH': {

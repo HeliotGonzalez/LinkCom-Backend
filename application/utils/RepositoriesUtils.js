@@ -18,5 +18,7 @@ repositoryFactory
     .put('Friends', new SupabaseRepository('Friends'))
     .put('FriendRequests', new SupabaseRepository('FriendRequests'))
     .put('Messages', new SupabaseRepository('Messages'))
+    .put('Notifications', new SupabaseRepository('Notifications'))
+    .put('UserChat', new SupabaseRepository('UserChat'))
 
 export default repositoryFactory;
