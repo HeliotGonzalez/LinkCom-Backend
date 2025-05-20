@@ -604,6 +604,35 @@ app.post('/createAnnouncement', async (req, res) => {
     }
 });
 
+app.patch('/editAnnouncement/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from('Announcements')
+      .update({ title, body }) // puedes agregar otros campos como imagePath si quieres
+      .eq('id', id)
+      .select('*');
+
+    if (error) {
+      console.error('Error al actualizar anuncio:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Announcement not found' });
+    }
+
+    return res.status(200).json({ message: 'Anuncio actualizado correctamente', data });
+
+  } catch (err) {
+    console.error('Error inesperado al actualizar anuncio:', err);
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
+});
+
+
 app.get('/announcements', async (req, res) => {
     const {communityID} = req.query;
 
