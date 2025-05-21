@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {buildCriteriaFrom, builderFactory, handleError} from "../utils/CiteriaUtils.js";
+import {buildCriteriaFrom, buildCriteriaFromEncoded, builderFactory, handleError} from "../utils/CiteriaUtils.js";
 import {HTTPMethodsMap} from "../utils/HTTPUtils.js";
 import {serviceFactory} from "../utils/ServicesUtils.js";
 import {fillingCommunityImage} from "../utils/imagesStore.js";
@@ -46,7 +46,7 @@ router.patch('/:from/updateFriendRequest', async (req, res) => {
     handleError(HTTPMethodsMap.PATCH, res, response);
 });
 router.delete('/:from/cancelFriendRequest', async (req, res) => handleError(HTTPMethodsMap.DELETE, res, await serviceFactory.get('users').cancelFriendRequest(buildCriteriaFrom({...req.params, ...req.query}))));
-
+router.get('/friendRequests/:criteria', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('users').friendRequests(buildCriteriaFromEncoded(req.params['criteria']))));
 router.get('/:userID/getFriends', async (req, res) => {
     const userID = req.params.userID;
 
