@@ -15,4 +15,6 @@ export const initializeSockets = (socket, io) => {
         .put('Messages', new SupabaseDomainSocket(socket, io, 'Messages'))
         .put('Notifications', new SupabaseDomainSocket(socket, io, 'Notifications'))
         .put('UserChat', new SupabaseDomainSocket(socket, io, 'UserChat'))
+        .put('Comments', new SupabaseDomainSocket(socket, io, 'Comments'))
+
 }
