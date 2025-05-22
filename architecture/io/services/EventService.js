@@ -51,4 +51,8 @@ export class EventService extends Service {
         return await this.factory.get('Comments').get(criteria);
     }
 
+    async members(criteria = []) {
+        return await this.factory.get('EventUser').get(criteria);
+    }
+
 }

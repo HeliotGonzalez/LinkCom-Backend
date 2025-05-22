@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {buildCriteriaFrom, builderFactory, handleError} from "../utils/CiteriaUtils.js";
+import {buildCriteriaFromEncoded, buildCriteriaFrom, builderFactory, handleError} from "../utils/CiteriaUtils.js";
 import {HTTPMethodsMap} from "../utils/HTTPUtils.js";
 import {serviceFactory} from "../utils/ServicesUtils.js";
 import {fillingEventImage, saveImage} from "../utils/imagesStore.js";
@@ -18,7 +18,12 @@ router.get('/excluding/:userID', async (req, res) => {
         [builderFactory.get('nin')('eventID', userEvents).build()]
     )));
 });
-router.get('/:eventID/members', async (req, res) => handleError(HTTPMethodsMap.GET, res, await serviceFactory.get('events').members(builderFactory({...req.params, ...req.query}))));
+router.get('/:eventID/members/:criteria', async (req, res) => {
+    const membersRes = await serviceFactory.get('events').members(buildCriteriaFromEncoded(req.params['criteria']));
+    const userIDs = Array.isArray(membersRes.data) ? membersRes.data.map(u => u.userID) : [];
+    const usersRes = await serviceFactory.get('users').get(buildCriteriaFrom({id: `in;${userIDs.join(',')}`}));
+    return handleError(HTTPMethodsMap.GET, res, usersRes);
+});
 router.put('/', async (req, res) => {
     const creationResponse = await serviceFactory.get('events').create(req.body);
     if (creationResponse.success && req.body.imagePath) {
