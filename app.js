@@ -12,7 +12,6 @@ import messageRouter from './application/controllers/MessageController.js';
 import notificationRouter from './application/controllers/NotificationController.js';
 import {Server} from "socket.io";
 import {initializeSockets} from "./application/utils/DomainSocketsInitializer.js";
-
 const app = express();
 
 app.use(cors());
@@ -218,64 +217,58 @@ app.get('/communityEvents', async (req, res) => {
     res.status(201).json({message: 'Community events found!', data: communityEventsResponse.data});
 });
 
-app.get('/test', async (req, res) => {
-    const {data, error} = await supabase.from('test').select('*');
-
-    if (error) {
-        console.error('Error en Supabase:', error);
-        return res.status(500).json({error: error.message});
-    }
-
-    res.json(data);
-});
 
 // New endpoint for user registration using Supabase Auth
 app.post('/user-register', async (req, res) => {
-    const {email, password, username, description} = req.body;
+  const { email, password, username, description, imagePath } = req.body;
+  console.log(req.body);
+  if (!email || !password || !username) {
+    return res.status(400).json({ error: 'Email, password, and username are required' });
+  }
 
-    if (!email || !password || !username) {
-        return res.status(400).json({error: 'Email, password, and username are required'});
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  try {
+    // Registrar usuario en Supabase Auth
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      console.error('Error during user registration:', error);
+      return res.status(400).json({ error: error.message });
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        return res.status(400).json({error: 'Invalid email format'});
+    let savedImagePath = null;
+    if (imagePath) {
+        
+      // Guardar imagen base64 en carpeta usuario y obtener ruta relativa
+      savedImagePath = await saveImage(imagePath, `./images/users/${data.user.id}`);
     }
 
-    try {
-        // Register the user with Supabase Auth
-        const {data, error} = await supabase.auth.signUp({
-            email,
-            password,
-        });
+    // Insertar usuario en tabla Users, incluyendo ruta imagen si existe
+    const { data: userData, error: userError } = await supabase.from('Users').insert([
+      {
+        id: data.user.id,
+        username,
+        email,
+        description,
+        imagePath
+      },
+    ]);
 
-        if (error) {
-            console.error('Error during user registration:', error);
-            return res.status(400).json({error: error.message});
-        }
-
-        // Insert additional user data into the Users table
-        const {data: userData, error: userError} = await supabase.from('Users').insert([
-            {
-                id: data.user.id, // Use the ID from Supabase Auth
-                username: username,
-                email: email,
-                description: description,
-            },
-        ]);
-
-        if (userError) {
-            console.error('Error inserting user into Users table:', userError);
-            return res.status(500).json({error: userError.message});
-        }
-
-        res.status(201).json({message: 'User registered successfully', user: userData});
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        res.status(500).json({error: 'An unexpected error occurred'});
+    if (userError) {
+      console.error('Error inserting user into Users table:', userError);
+      return res.status(500).json({ error: userError.message });
     }
+
+    res.status(201).json({ message: 'User registered successfully', user: userData });
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
 });
+
 
 // New endpoint for user login using Supabase Auth
 app.post('/login', async (req, res) => {

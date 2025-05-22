@@ -150,4 +150,8 @@ export class UserService extends Service {
       return response;
     }
 
+    async create(user) {
+      return await this.factory.get('Users').create(user);
+    }
+
 }

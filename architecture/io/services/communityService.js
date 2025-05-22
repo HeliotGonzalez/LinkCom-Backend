@@ -13,7 +13,15 @@ export class CommunityService extends Service {
     async create(parameters, interests) {
         const creationResponse = await this.factory.get('Communities').create(parameters);
         if (creationResponse.success) await this.join(creationResponse.data[0].id, parameters.creatorID);
-        if (creationResponse.success && interests) await this.factory.get('CommunityInterest').create(parameters);
+        if (creationResponse.success && interests) {
+            for (const i of interests) {
+                const res = await this.factory.get('CommunityInterest').create({
+                    'communityID': creationResponse.data[0].id,
+                    'interest': i
+                });
+                console.log(res);
+            }
+        }
         return creationResponse;
     }
 

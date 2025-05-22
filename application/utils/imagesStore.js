@@ -11,7 +11,8 @@ export const saveImage = async (imageBase64, imageDirectory) => {
 
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
-    const fileName = 'image.png';
+    const fileName = `image_${Date.now()}.png`;
+
 
     const filePath = path.join(directory, fileName);
 
