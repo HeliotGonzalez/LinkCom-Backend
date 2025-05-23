@@ -25,8 +25,8 @@ router.get('/:eventID/members/:criteria', async (req, res) => {
     return handleError(HTTPMethodsMap.GET, res, usersRes);
 });
 router.put('/', async (req, res) => {
-    const creationResponse = await serviceFactory.get('events').create(req.body);
-    if (creationResponse.success && req.body.imagePath) {
+    const creationResponse = await serviceFactory.get('events').create(req.body.parameters, req.body.interests);
+    if (creationResponse.success && req.body.parameters.imagePath) {
         await serviceFactory.get('events').update(
             [builderFactory.get('eq')('id', creationResponse.data[0].id).build()],
             {imagePath: await saveImage(req.body.imagePath, `../../images/communities/${req.body.communityID}/${creationResponse.data[0].id}`)}
