@@ -475,40 +475,35 @@ app.get("/users", async (req, res) => {
 app.get('/updateusers', async (req, res) => {
     const {userID, communityID, role} = req.query;
 
-    if (!userID || !communityID || !role) {
-        return res.status(400).json({error: 'userID, communityID y role son requeridos'});
+  if (!userID || !communityID || !role) {
+    return res.status(400).json({ error: 'userID, communityID y role son requeridos' });
+  }
+
+  try {
+    const { data, error } = await supabase.from('CommunityUser').update({ communityRole: role }).eq('userID', userID).eq('communityID', communityID);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
     }
+  
+    return res.status(201).json({ message: 'El usuario ha actualizado su rol correctamente', data });
 
-    try {
-        const {
-            data,
-            error
-        } = await supabase.from('CommunityUser').update({communityRole: role}).eq('userID', userID).eq('communityID', communityID);
-
-        if (error) {
-            return res.status(500).json({error: error.message});
-        }
-
-        return res.status(201).json({message: 'El usuario ha actualizado su rol correctamente', data});
-
-    } catch (err) {
-        return res.status(500).json({error: 'Error inesperado'});
-    }
+  } catch (err) {
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
 });
 
 app.get('/community', async (req, res) => {
-    const {communityID} = req.query;
+  const { communityID } = req.query;
 
-    if (!communityID) {
-        return res.status(400).json({error: 'communityID es requerido'});
-    }
+  if (!communityID) {
+    return res.status(400).json({ error: 'communityID es requerido' });
+  }
 
-    const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
-    if (!communityResponse.success) return res.status(500).json({error: communityResponse["error"]});
-
-    communityResponse.data[0]['imagePath'] = await getImage(`images/communities/${communityID}/communityImage.png`);
-
-    return res.status(201).json({message: 'Usuarios encontrados', data: communityResponse.data});
+  const communityResponse = await executeQuery(supabase.from('Communities').select('*').eq('id', communityID));
+  if (!communityResponse.success) return res.status(500).json({ error: communityResponse["error"]});
+  const data = communityResponse.data;
+  return res.status(201).json({ message: 'Usuarios encontrados', data });
 });
 
 app.post('/leaveCommunity', async (req, res) => {
@@ -601,6 +596,35 @@ app.post('/createAnnouncement', async (req, res) => {
         return res.status(500).json({error: 'Error inesperado'});
     }
 });
+
+app.patch('/editAnnouncement/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, body } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from('Announcements')
+      .update({ title, body }) // puedes agregar otros campos como imagePath si quieres
+      .eq('id', id)
+      .select('*');
+
+    if (error) {
+      console.error('Error al actualizar anuncio:', error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!data || data.length === 0) {
+      return res.status(404).json({ error: 'Announcement not found' });
+    }
+
+    return res.status(200).json({ message: 'Anuncio actualizado correctamente', data });
+
+  } catch (err) {
+    console.error('Error inesperado al actualizar anuncio:', err);
+    return res.status(500).json({ error: 'Error inesperado' });
+  }
+});
+
 
 app.get('/announcements', async (req, res) => {
     const {communityID} = req.query;
